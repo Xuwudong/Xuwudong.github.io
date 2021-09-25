@@ -1,0 +1,449 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>堆的应用-合并有序小文件</title>
+    <url>/2021/06/07/mergeFiles/</url>
+    <content><![CDATA[<p>&ensp;&ensp;假设我们有 100 个小文件，每个文件的大小是 100MB，每个文件中存储的都是有序的字符串。我们希望将这些 100 个小文件合并成一个有序的大文件。这里就会用到优先级队列。</p>
+<p>&ensp;&ensp;整体思路有点像归并排序中的合并函数。我们从这 100 个文件中，各取第一个字符串，放入数组中，然后比较大小，把最小的那个字符串放入合并后的大文件中，并从数组中删除。</p>
+<span id="more"></span>
+
+<p>&ensp;&ensp;假设，这个最小的字符串来自于 13.txt 这个小文件，我们就再从这个小文件取下一个字符串，并且放到数组中，重新比较大小，并且选择最小的放入合并后的大文件，并且将它从数组中删除。依次类推，直到所有的文件中的数据都放入到大文件为止。</p>
+<p>&ensp;&ensp;这里我们用数组这种数据结构，来存储从小文件中取出来的字符串。每次从数组中取最小字符串，都需要循环遍历整个数组，显然，这不是很高效。有没有更加高效方法呢？</p>
+<p>&ensp;&ensp;我们知道，删除堆顶数据和往堆中插入数据的时间复杂度都是 O(logn)，n 表示堆中的数据个数，这里就是 100。是不是比原来数组存储的方式高效了很多呢？</p>
+<p>&ensp;&ensp;思路已经有了，这里我用Java实现了一个小规模的合并100个包含有序数字的demo:</p>
+<p>1.声明几个静态变量</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** 有序文件列表**/</span><br><span class="line">public static ArrayList&lt;File&gt; fileList = new ArrayList&lt;&gt;();    </span><br><span class="line"> /** 小顶堆 **/</span><br><span class="line">private static Heap&lt;Node&gt; heap = new Heap&lt;&gt;(101, new Comparator&lt;Node&gt;() &#123;        </span><br><span class="line">    @Override</span><br><span class="line">    public int compare(Node o1, Node o2) &#123;            </span><br><span class="line">       <span class="keyword">if</span> (Long.parseLong(o1.getWord()) &gt; Long.parseLong(o2.getWord())) &#123;               </span><br><span class="line">           <span class="built_in">return</span> -1;</span><br><span class="line">       &#125; <span class="keyword">else</span> <span class="keyword">if</span> (Long.parseLong(o1.getWord()) &lt; Long.parseLong(o2.getWord())) &#123;                </span><br><span class="line">           <span class="built_in">return</span> 1;</span><br><span class="line">       &#125; <span class="keyword">else</span> &#123;               </span><br><span class="line">           <span class="built_in">return</span> 0;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;);   </span><br><span class="line"> /**  file -&gt; fileReader 保存每个文件的输入流**/</span><br><span class="line">private static HashMap&lt;File, BufferedReader&gt; readerMap = new HashMap&lt;&gt;();    </span><br><span class="line">/** 每个文件的行数 **/</span><br><span class="line">private static int fileLine = 100000;</span><br></pre></td></tr></table></figure>
+
+<p>2.创建小文件并写入内容</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 创建小文件(如果存在，将其删除）并写入内容</span><br><span class="line"> *</span><br><span class="line"> * @param dic</span><br><span class="line"> */</span><br><span class="line">public static void create(String dic) throws IOException &#123;</span><br><span class="line">    File file = new File(dic);        </span><br><span class="line">    <span class="keyword">if</span> (!file.exists()) &#123;</span><br><span class="line">        file.mkdirs();</span><br><span class="line">    &#125;        </span><br><span class="line">    <span class="keyword">if</span> (file.isDirectory()) &#123;</span><br><span class="line">        String fileName = dic + <span class="string">&quot;\\test&quot;</span>;            </span><br><span class="line">        <span class="keyword">for</span> (int i = 0; i &lt; 100; i++) &#123;</span><br><span class="line">           File f = new File(fileName + i + <span class="string">&quot;.txt&quot;</span>);                <span class="keyword">if</span> (!f.exists()) &#123;</span><br><span class="line">               f.createNewFile();</span><br><span class="line">               writeFileContent(f.getAbsolutePath(), i);</span><br><span class="line">           &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                f.delete();</span><br><span class="line">                f.createNewFile();</span><br><span class="line">                writeFileContent(f.getAbsolutePath(), i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;    </span><br><span class="line">/**</span><br><span class="line"> * 写入内容，每行相差&lt;!--fileLine--&gt;</span><br><span class="line"> *</span><br><span class="line"> * @param fileName</span><br><span class="line"> * @param i</span><br><span class="line"> */</span><br><span class="line">public static void writeFileContent(String fileName, long i) &#123;</span><br><span class="line">    File file = new File(fileName);        </span><br><span class="line">    <span class="keyword">if</span> (file.exists()) &#123;            </span><br><span class="line">        try (PrintWriter pw = new PrintWriter(new FileOutputStream(file))) &#123;                </span><br><span class="line">            <span class="keyword">for</span> (int j = 0; j &lt; fileLine; j++) &#123;</span><br><span class="line">                pw.write(i + <span class="string">&quot;\r\n&quot;</span>);</span><br><span class="line">                pw.flush();</span><br><span class="line">                i = i + fileLine;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; catch (FileNotFoundException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>3.初始化fileList和fileReaded</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public static void init(File file) throws FileNotFoundException &#123;        </span><br><span class="line">    <span class="keyword">if</span> (file.isDirectory()) &#123;</span><br><span class="line">        File[] files = file.listFiles();            </span><br><span class="line">        <span class="keyword">for</span> (File f : files) &#123;                </span><br><span class="line">            <span class="keyword">if</span> (f.isDirectory()) &#123;</span><br><span class="line">                init(f);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;                    </span><br><span class="line">                <span class="keyword">if</span> (f.getName().indexOf(<span class="string">&quot;bigFile&quot;</span>) &lt; 0) &#123;</span><br><span class="line">                    fileList.add(f);</span><br><span class="line">                    readerMap.put(f, new BufferedReader(new InputStreamReader(new FileInputStream(f))));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;            </span><br><span class="line">        <span class="keyword">if</span> (file.getName().indexOf(<span class="string">&quot;bigFile&quot;</span>) &lt; 0) &#123;</span><br><span class="line">            fileList.add(file);</span><br><span class="line">            readerMap.put(file, new BufferedReader(new InputStreamReader(new FileInputStream(file))));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>4.创建大文件</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/**</span><br><span class="line"> * 新建大文件，如果存在，将其删除</span><br><span class="line"> * </span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> * @throws IOException</span><br><span class="line"> */</span><br><span class="line">public static File createBigFile() throws IOException &#123;</span><br><span class="line">   File bigFile = new File(<span class="string">&quot;D:\\data\\mergeFileData\\bigFile.txt&quot;</span>);        </span><br><span class="line">   <span class="keyword">if</span> (!bigFile.exists()) &#123;</span><br><span class="line">        bigFile.createNewFile();</span><br><span class="line">   &#125;        </span><br><span class="line">   try (FileWriter fileWriter = new FileWriter(bigFile)) &#123;</span><br><span class="line">        fileWriter.write(<span class="string">&quot;&quot;</span>);</span><br><span class="line">        fileWriter.flush();</span><br><span class="line">   &#125;        </span><br><span class="line">   <span class="built_in">return</span> bigFile;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>5.初始化堆，从每个小文件读入一行到堆中。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public static void initHeap(File bigFile) throws FileNotFoundException &#123;        </span><br><span class="line">    <span class="keyword">for</span> (File file : fileList) &#123;</span><br><span class="line">         BufferedReader reader = readerMap.get(file);</span><br><span class="line">         String word;            </span><br><span class="line">         try &#123;</span><br><span class="line">            word = reader.readLine();                </span><br><span class="line">            <span class="keyword">if</span> (word != null) &#123;</span><br><span class="line">                heap.insert(new Node(word, file));</span><br><span class="line">            &#125;</span><br><span class="line">       &#125; catch (IOException e) &#123;</span><br><span class="line">           e.printStackTrace();</span><br><span class="line">       &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>6.循环堆，删除堆顶元素，并将堆顶元素写入大文件中，若堆顶元素来自于此时被读的文件，则继续读此文件，否则继续删除堆顶元素以读取下一个文件.</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public static void move(File bigFile) &#123;        </span><br><span class="line">    try (PrintWriter pw = new PrintWriter(new FileOutputStream(bigFile))) &#123;            </span><br><span class="line">        <span class="keyword">while</span> (heap.getCount() &gt; 0) &#123;</span><br><span class="line">            Node minNode = heap.deleteFirst();</span><br><span class="line">            pw.write(minNode.getWord() + <span class="string">&quot;\r\n&quot;</span>);</span><br><span class="line">            File file = minNode.getFile();</span><br><span class="line">            BufferedReader reader = readerMap.get(file);</span><br><span class="line">            String word = reader.readLine();                </span><br><span class="line">            <span class="keyword">if</span> (word != null &amp;&amp; word != <span class="string">&quot;\r\n&quot;</span>) &#123;</span><br><span class="line">                Node node = new Node(word, file);</span><br><span class="line">                heap.insert(node);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        heap.print();</span><br><span class="line">    &#125; catch (IOException e) &#123;</span><br><span class="line">        e.printStackTrace();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://github.com/Xuwudong/algo">完整代码链接（文件为MergeFiles.java）</a></p>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>堆</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法的奥秘-回溯（1）</title>
+    <url>/2021/06/17/backtracing-1/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天分享一道简单的回溯算法题（在我看来并不简单！），毁灭吧，赶紧的！<br>题目：二进制手表<br>描述：二进制手表顶部有 4 个 LED 代表 小时（0-11），底部的 6 个 LED 代表 分钟（0-59）。</p>
+<p>每个 LED 代表一个 0 或 1，最低位在右侧。</p>
+<span id="more"></span>
+
+<p><img src="/images/backtracing/%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%89%8B%E8%A1%A8.webp" alt="avatar"></p>
+<p>例如，上面的二进制手表读取 “3:25”。<br><br>给定一个非负整数 n 代表当前 LED 亮着的数量，返回所有可能的时间。</p>
+<p>示例：<br>输入: n = 1<br><br>返回: [“1:00”, “2:00”, “4:00”, “8:00”, “0:01”, “0:02”, “0:04”, “0:08”, “0:16”, “0:32”]<br><br>提示：</p>
+<ul>
+<li>输出的顺序没有要求。</li>
+<li>小时不会以零开头，比如 “01:00” 是不允许的，应为 “1:00”。</li>
+<li>分钟必须由两位数组成，可能会以零开头，比如 “10:2” 是无效的，应为 “10:02”。</li>
+<li>超过表示范围（小时 0-11，分钟 0-59）的数据将会被舍弃，也就是说不会出现 “13:00”, “0:61” 等时间。</li>
+</ul>
+<p>分析：题目需要返回所有可能的时间，可以对手表建模，时钟定义一个数组hours,包含4盏灯，代表数值分别为【1,2，4,8】，分钟定义一个数组mins，包含6盏灯，代表数值分别为【1,2，4,8，16,32】。对于输入n,需要从hours中取出i盏灯，mins中取出n-j盏灯，并将合并的结果存入list。这就是子集的变形，很容易想到用回溯求解，但是做起来还是有一些注意点值得关注，直接看代码！</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">int[] hours = new int[]&#123;1, 2, 4, 8&#125;;</span><br><span class="line">int[] mins = new int[]&#123;1, 2, 4, 8, 16, 32&#125;;</span><br><span class="line"></span><br><span class="line">public List&lt;String&gt; readBinaryWatch(int num) &#123;</span><br><span class="line">    List&lt;String&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    dfs(res, num, 0, 0, 0, 0);</span><br><span class="line">    <span class="built_in">return</span> new ArrayList&lt;&gt;(res);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * dfs</span><br><span class="line"> *</span><br><span class="line"> * @param res    结果集</span><br><span class="line"> * @param num    灯的个数</span><br><span class="line"> * @param indexH hours的索引</span><br><span class="line"> * @param indexM mins的索引</span><br><span class="line"> * @param hour   当前hour的值</span><br><span class="line"> * @param min    当前min的值</span><br><span class="line"> */</span><br><span class="line">private void dfs(List&lt;String&gt; res, int num, int indexH, int indexM, int hour, int min) &#123;</span><br><span class="line">    <span class="keyword">if</span> (num == 0) &#123;</span><br><span class="line">        // 递归结束条件为num == 0,注意不是indexH + indexM == num, 因为indexH表示的是hours的索引。</span><br><span class="line">        String minStr = (0 &lt;= min &amp;&amp; min &lt;= 9) ? <span class="string">&quot;0&quot;</span> + min : min + <span class="string">&quot;&quot;</span>;</span><br><span class="line">        String str = hour + <span class="string">&quot;:&quot;</span> + minStr;</span><br><span class="line">        res.add(str);</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    // 这种循环结构就是求hours的子集，此题就是求hours求指定长度的各个子集的和</span><br><span class="line">    <span class="keyword">for</span> (int i = indexH; i &lt; hours.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hour + hours[i] &gt;= 12) &#123;</span><br><span class="line">            // 如果大于12，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        dfs(res, num - 1, i + 1, indexM, hour + hours[i], min);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变hour的值</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = indexM; i &lt; mins.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (min + mins[i] &gt;= 60) &#123;</span><br><span class="line">            // 如果大于60，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        // 注意这里递归到mins时，并不需要再次递归到hours,不然结果会重复,所以indexH填4</span><br><span class="line">        dfs(res, num - 1, 4, i + 1, hour, min + mins[i]);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变min的值</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>题目递归结束的条件是num == 0，而不是indexH + indexM == num。</li>
+<li>回溯算法一般都可以通过剪枝减少递归，具体看代码中的break片段。</li>
+<li>此题有两个求子集的过程，所以有两个for循环，注意下面一个循环中的dfs，indexH的取值不能传当前值了（如果传了当前值，递归进去又会走一遍hours循环，这样结果就有重复值了），所以直接取4。</li>
+<li>回溯算法一般都需要在回溯时做“还原”操作，但是这里因为dfs前并没有改正hour和min的值，所以dfs后不用“还原”。</li>
+</ul>
+<p>这是自己的一些想法，如果你有更好的想法欢迎留言！</p>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>回溯</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法的奥秘-回溯（3）</title>
+    <url>/2021/06/17/backtracing-3/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天打算分享下回溯算法中的另一种题型–是否存在***，这种题型一般都不用走完整个dfs过程，如果存在就可以直接返回了，这样相当于剪枝了，可以很大程度提升算法执行时间。那还等什么，毁灭吧，赶紧的！</p>
+<p>1、单词搜素</p>
+<p>给定一个二维网格和一个单词，找出该单词是否存在于网格中。</p>
+<p>单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。</p>
+<span id="more"></span>
+
+<p>示例:</p>
+<p>board =</p>
+<p>[</p>
+<p>  [‘A’,’B’,’C’,’E’],</p>
+<p>  [‘S’,’F’,’C’,’S’],</p>
+<p>  [‘A’,’D’,’E’,’E’]</p>
+<p>]</p>
+<p>给定 word = “ABCCED”, 返回 true</p>
+<p>给定 word = “SEE”, 返回 true</p>
+<p>给定 word = “ABCB”, 返回 false</p>
+<p>提示：</p>
+<ul>
+<li><p>board 和 word 中只包含大写和小写英文字母。</p>
+</li>
+<li><p>1 &lt;= board.length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= board[i].length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= word.length &lt;= 10^3</p>
+</li>
+</ul>
+<p>代码：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public boolean exist(char[][] board, String word) &#123;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; board.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (int j = 0; j &lt; board[i].length; j++) &#123;</span><br><span class="line">            boolean[][] used = new boolean[board.length][board[i].length];</span><br><span class="line">            <span class="keyword">if</span> (dfs(i, j, board, word, 0, used)) &#123;</span><br><span class="line">                <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean dfs(int row, int col, char[][] board, String word, int index, boolean[][] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == word.length()) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (row &lt; 0 || row &gt;= board.length || col &lt; 0 || col &gt;= board[row].length || board[row][col] != word.charAt(index) || used[row][col]) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    used[row][col] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    boolean res = dfs(row + 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col + 1, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row - 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col - 1, board, word, index + 1, used);</span><br><span class="line">    used[row][col] = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ol>
+<li><p>可以看到连续四个dfs那里，用的是短路或，这样保证了只要存在true的结果，其他的dfs也就不用递归进去了，也就达到了剪枝的效果。</p>
+</li>
+<li><p>注意这里dfs进去前没有判断边界条件，而是放在了进去后再进行判断，有时候知道怎么做就是写不出来，这点也要注意。</p>
+</li>
+</ol>
+<br>
+2、累加数
+
+<p>累加数是一个字符串，组成它的数字可以形成累加序列。</p>
+<p>一个有效的累加序列必须至少包含 3 个数。除了最开始的两个数以外，字符串中的其他数都等于它之前两个数相加的和。</p>
+<p>给定一个只包含数字 ‘0’-‘9’ 的字符串，编写一个算法来判断给定输入是否是累加数。</p>
+<p>说明: 累加序列里的数不会以 0 开头，所以不会出现 1, 2, 03 或者 1, 02, 3 的情况。</p>
+<p>示例 1:</p>
+<p>输入: “112358”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 1, 2, 3, 5, 8 。1 + 1 = 2, 1 + 2 = 3, 2 + 3 = 5, 3 + 5 = 8</p>
+<p>示例 2:</p>
+<p>输入: “199100199”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 99, 100, 199。1 + 99 = 100, 99 + 100 = 199</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private String s;</span><br><span class="line"></span><br><span class="line">private int n;</span><br><span class="line"></span><br><span class="line">public boolean isAdditiveNumber(String num) &#123;</span><br><span class="line">    s = num;</span><br><span class="line">    n = s.length();</span><br><span class="line">    <span class="built_in">return</span> dfs(0, 0, 0, 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> *</span><br><span class="line"> * @param index 下标</span><br><span class="line"> * @param sum 前两个数之和</span><br><span class="line"> * @param previous 前一个数</span><br><span class="line"> * @param count 已经添加的个数</span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> */</span><br><span class="line">private boolean dfs(int index, long sum, long previous, int count) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 3) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // value值用于累加值</span><br><span class="line">    long value = 0;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        // 第一个数是0，而且当前value大于一位，直接<span class="built_in">break</span></span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; s.charAt(index) == <span class="string">&#x27;0&#x27;</span>) &#123;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        value = value * 10 + s.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 2) &#123;</span><br><span class="line">            <span class="keyword">if</span> (value &lt; sum) &#123;</span><br><span class="line">                // 继续累加value</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (value &gt; sum) &#123;</span><br><span class="line">                // 累加value无意义，直接<span class="built_in">break</span></span><br><span class="line">                <span class="built_in">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 忽略<span class="literal">false</span>结果，妙！</span><br><span class="line">        <span class="keyword">if</span> (dfs(i + 1, previous + value, value, count + 1)) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里dfs进去直接忽略了false结果，试想这里如果不忽略false，也返回一个false结果，那么只要一次尝试不成功就不会继续尝试了,这样就没有达到穷举的效果，而一点返回true，说明我们这种字符串分割方法就是我们要的结果，因此可以直接返回true，一层接着一层，最终最外层返回true，给到调用方，结束递归。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>回溯</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>小公司的大梦想 - 秒杀</title>
+    <url>/2021/06/17/spide/</url>
+    <content><![CDATA[<p>&ensp;&ensp;最近工作上有一个限量点餐的需求，本来公司人不多，但是谁知餐厅供应的特色腊肠牛肉饭特少，而员工对这特色饭情有独钟，导致餐厅一开始营业员工就开始疯抢，这也就形成了电商行业中著名的秒杀情景。</p>
+<p>&ensp;&ensp;而此时我以前的代码实现的下单方案是：先从数据库中查询出该时段该菜式的销售量，再与该菜式总的库存进行比较，如果大于库存，直接返回“菜式已售罄”；如果小于库存，则进行后面的下单流程。有一点经验或认知的朋友，一眼就能看出这里存在并发问题。可能是因为一直被动接受业务的原因，直到和同时聊起项目被同事怀疑代码有并发bug时，才仔细一想确实有bug。这里需要指出的是项目使用的语言是Node.js，尽管Node是单线程的，但是单线程只是针对一个请求来说，对于多个请求，还是存在并发问题的。这其中的道理可以类比Java的指令重排：对于单线程，再怎么指令重排也不会影响到线程的执行结果；但是对于别的线程看到的结果就有可能不同了。这也是Java线程安全问题的本质原因。</p>
+<span id="more"></span>
+
+<p>&ensp;&ensp;经过一番查阅资料和请教大佬，最终决定使用redis的列表来做队列，基于排队的理念来实现“秒杀”。具体的将每个菜式的库存保存在Redis中，然后对于每个时段每个菜式的请求用一个list保存（餐厅的菜式供应是分时段的，每个时段开始时菜式库存都会初始化为原来值）。当请求来了先把请求放到队列的右边，然后从左边取出前‘’库存量‘’个请求，判断当前请求是否在这前“库存量”个请求中。如果在，进行下单操作；如果不在，返回‘’库存不足‘’。对应业务具体思路如下：</p>
+<p>&ensp;&ensp;这里对于为了标识每个请求不同，将请求人的 id+uuid.v4() 作为值rpush进对应的菜式列表，如果请求n份菜式，就rpush n次值。因为业务同时需要取消订单、修改订单，取消订单时需要找到添加订单时push进去的值并删除，因此需要将添加订单时push进去的值存起来，这里使用订单orderId做key，添加订单时push进去的值做value存入Redis中；修改订单麻烦一点，因为加菜会rpush进新的请求并判断请求是不是在前“库存量”内，所以在生成订单时如果不满足库存要求，就要将该请求删除掉。另外假设下订单时选了一份菜，修改订单时如果将该菜式数量加1，如果此时生成不同的 id + uuid.v4()值存进去的话，等以后将这两份分别删除的话，就得分别拿到这两份菜式对应的id + uuid.v4()值,如果n次修改订单并添加该菜式的数量，就会生成n个id + uuid.v4()值，这样操作起来就比较麻烦了，所以修改订单时如果对同一个菜式进行修改，使用的id + uuid.v4()值就是这个订单生成时对应的id + uuid.v4() 值，这样带来的另一个问题是修改订单时判断list前‘库存量’个请求的数量要跟修改订单后的数量一致才表示能够进行修改操作，否则返回“库存不足”。</p>
+<p>&ensp;&ensp;核心代码实现如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** </span><br><span class="line">  * &#123;Array&#125; dishes </span><br><span class="line">  * &#123;Number&#125; dishes[*].dishesId  - 菜式id</span><br><span class="line">  * &#123;Number&#125; dishes[*].number    - 菜式数量</span><br><span class="line">  * &#123;String&#125; keyPrefix           - 请求list的key前缀</span><br><span class="line">  * &#123;String&#125; keySuffix           - 请求list的key后缀，由餐厅id + 营业开始时间时间戳组成</span><br><span class="line">  * &#123;String&#125; userValue           - 请求list的请求值，由用户Id + uuid.v4()组成</span><br><span class="line">  * &#123;Object&#125; dishNumberMap &#123;dishId:number&#125;,number表示修改订单成功后该菜式的数量 </span><br><span class="line">  */ </span><br><span class="line"> async <span class="keyword">function</span> checkStock(dishes,keyPrefix,keySuffix,userValue,dishNumberMap)&#123; </span><br><span class="line">     <span class="built_in">let</span> stckMap = &#123;&#125;; // 保存菜式的库存</span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> stock = awaic cache.get(<span class="string">&#x27;stock:&#x27;</span> + dish.dishesId); // 获取菜式库存</span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1)&#123; // -1表示无限库存</span><br><span class="line">             stockMap[dish.dishesId] = stock; </span><br><span class="line">             <span class="keyword">for</span>(<span class="built_in">let</span> i = 0;i&lt;dish.number;i++)&#123; </span><br><span class="line">                 // rpush keyPrefix + dishesId + keySuffix : list </span><br><span class="line">                 await cache.rpush(keyPrefix + dish.dishesId + keySuffix,userValue); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> number = (dishNumberMap &amp;&amp; dishNumberMap[dish.dishesId]) || dish.number; </span><br><span class="line">         <span class="built_in">let</span> stock = stockMap[dish.dishesId]; </span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1) &#123; // -1表示无限库存  </span><br><span class="line">             // 取前stock个请求 </span><br><span class="line">             <span class="built_in">let</span> userValueList = await cache.lrange(keyPrefix + dish.dishesId + keySuffix,0,stock -1); </span><br><span class="line">             <span class="keyword">if</span> ((_.countBy(userValueList)[userValue] || 0) &lt; number)&#123; // 判断数量是否相等 </span><br><span class="line">                 // 队列前stock个请求包含的userVaule个数小于请求的number值，则移除当前请求，为了修改订单时可以push进新的userValue </span><br><span class="line">                 <span class="keyword">for</span> (<span class="built_in">let</span> d of dishes)&#123; </span><br><span class="line">                     await cache.lrem(keyPrefix + d.dishesId + keySuffix, -d.number,userValue); </span><br><span class="line">                 &#125; </span><br><span class="line">                 <span class="built_in">return</span> Promise.reject(<span class="string">&#x27;库存不足&#x27;</span>); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;总结一下，主要利用了队列来实现对有限资源的请求与分发，以及redis 单线程的特点实现线程安全。当然还有更好的方案，这个方案很简单，但是扩展性很差，而且也不能确定就一定没有问题。如果你有更好的解决方案或者对此有什么问题和见解欢迎留言~</p>
+]]></content>
+      <categories>
+        <category>技术应用</category>
+      </categories>
+      <tags>
+        <tag>秒杀</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法的奥秘-栈（基础篇）</title>
+    <url>/2021/06/17/stack-1/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天分享下栈的基础算法，栈一句话描述就是一个后进先出的容器，跟栈相对立的一个结构是队列，队列的特征是元素先进先出。他们之间可以互相转换。那还等什么，毁灭吧，赶紧的！</p>
+<br>
+1、用队列实现栈
+
+<p>请你仅使用两个队列实现一个后入先出（LIFO）的栈，并支持普通队列的全部四种操作（push、top、pop 和 empty）。</p>
+<span id="more"></span>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">class MyStack &#123;</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue1 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue2 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public MyStack() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x onto stack. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        queue2.add(x);</span><br><span class="line">        while(!queue1.isEmpty()) &#123;</span><br><span class="line">            queue2.add(queue1.poll());</span><br><span class="line">        &#125;</span><br><span class="line">        Queue&lt;Integer&gt; temp = queue1;</span><br><span class="line">        queue1 = queue2;</span><br><span class="line">        queue2 = temp;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element on top of the stack and returns that element. */</span><br><span class="line">    public int pop() &#123;</span><br><span class="line">        return queue1.poll();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the top element. */</span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return queue1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the stack is empty. */</span><br><span class="line">    public boolean empty() &#123;</span><br><span class="line">        return queue1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>入栈操作时，首先将元素入队到queue2,然后将queue1的全部元素依次出队并入队到queue2，此时queue2的前端元素即为新入栈的元素，再将queue1与queue2互换，即queue1的元素即为栈内的元素，queue1的前端和后端分别对应栈顶和栈底。</p>
+</li>
+<li><p>由于每次入栈操作都确保queue1的前端元素为栈顶元素，因此出栈操作和获取栈顶操作都可以简单的实现。</p>
+</li>
+</ul>
+<br>
+  2、用栈实现队列
+
+<p>请你仅使用两个栈实现先入先出队列。队列应当支持一般队列支持的所有操作（push、pop、peek、empty）：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MyQueue &#123;</span><br><span class="line">    Stack&lt;Integer&gt; stack1 = new Stack&lt;&gt;();</span><br><span class="line">    Stack&lt;Integer&gt; stack2 = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public <span class="function"><span class="title">MyQueue</span></span>() &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x to the back of queue. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        <span class="keyword">while</span>(!stack1.isEmpty()) &#123;</span><br><span class="line">            stack2.push(stack1.pop());</span><br><span class="line">        &#125;</span><br><span class="line">        stack1.push(x);</span><br><span class="line">        <span class="keyword">while</span>(!stack2.isEmpty()) &#123;</span><br><span class="line">            stack1.push(stack2.pop());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element from <span class="keyword">in</span> front of queue and returns that element. */</span><br><span class="line">    public int <span class="function"><span class="title">pop</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.pop();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the front element. */</span><br><span class="line">    public int <span class="function"><span class="title">peek</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the queue is empty. */</span><br><span class="line">    public boolean <span class="function"><span class="title">empty</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>元素x入栈时，首先将stack1中的元素依次出栈并入栈到stack2,然后将x入栈到stack1,再将stack2中的元素依次出栈并入栈到stack1,这样x就位于stack1的栈底，而原来stack1中的元素位置没有变化，即实现了队列的效果。</li>
+</ul>
+<br>
+
+<p>  3、最小栈</p>
+<p>设计一个支持 push ，pop ，top 操作，并能在常数时间内检索到最小元素的栈。</p>
+<ul>
+<li>push(x) —— 将元素 x 推入栈中。</li>
+<li>pop() —— 删除栈顶的元素。</li>
+<li>top() —— 获取栈顶元素。</li>
+<li>getMin() —— 检索栈中的最小元素。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MinStack &#123;</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; minStack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * initialize your data structure here.</span><br><span class="line">     */</span><br><span class="line">    public MinStack() &#123;</span><br><span class="line">        minStack.push(Integer.MAX_VALUE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void push(int val) &#123;</span><br><span class="line">        stack.push(val);</span><br><span class="line">        minStack.push(Math.min(minStack.peek(), val));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void pop() &#123;</span><br><span class="line">        int pop = stack.pop();</span><br><span class="line">        minStack.pop();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return stack.peek();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int getMin() &#123;</span><br><span class="line">        return minStack.peek();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>对于栈来说，如果一个元素 a 在入栈时，栈里有其它的元素 b, c, d，那么无论这个栈在之后经历了什么操作，只要 a 在栈中，b, c, d 就一定在栈中，因为在 a 被弹出之前，b, c, d 不会被弹出。</p>
+</li>
+<li><p>因此，在操作过程中的任意一个时刻，只要栈顶的元素是 a，那么我们就可以确定栈里面现在的元素一定是 a, b, c, d。</p>
+</li>
+<li><p>那么，我们可以在每个元素 a 入栈时把当前栈的最小值 m 存储起来。在这之后无论何时，如果栈顶元素是 a，我们就可以直接返回存储的最小值 m。</p>
+</li>
+</ul>
+<br>
+4、最大栈
+
+<p>   和最小栈同样的思路，读者可以自己尝试着写写。</p>
+ <Br> 
+5、队列的最大值
+
+<p>请定义一个队列并实现函数 max_value 得到队列里的最大值，要求函数max_value、push_back 和 pop_front 的均摊时间复杂度都是O(1)。</p>
+<p>若队列为空，pop_front 和 max_value 需要返回 -1</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MaxQueue &#123;</span><br><span class="line">    Queue&lt;Integer&gt; q;</span><br><span class="line">    Deque&lt;Integer&gt; d;</span><br><span class="line"></span><br><span class="line">    public MaxQueue() &#123;</span><br><span class="line">        q = new LinkedList&lt;Integer&gt;();</span><br><span class="line">        d = new LinkedList&lt;Integer&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int max_value() &#123;</span><br><span class="line">        if (d.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        return d.peekFirst();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public void push_back(int value) &#123;</span><br><span class="line">        while (!d.isEmpty() &amp;&amp; d.peekLast() &lt; value) &#123;</span><br><span class="line">            d.pollLast();</span><br><span class="line">        &#125;</span><br><span class="line">        d.offerLast(value);</span><br><span class="line">        q.offer(value);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int pop_front() &#123;</span><br><span class="line">        if (q.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        int ans = q.poll();</span><br><span class="line">        if (ans == d.peekFirst()) &#123;</span><br><span class="line">            d.pollFirst();</span><br><span class="line">        &#125;</span><br><span class="line">        return ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;这题其实是队列的特性，题目的标签是栈，但是目前没想到利用栈的解法，这里分享一种通过双端队列实现的方法。</p>
+<p>&ensp;&ensp;本算法基于问题的一个重要性质：当一个元素进入队列的时候，它前面所有比它小的元素就不会再对答案产生影响。</p>
+<p>&ensp;&ensp;举个例子，如果我们向队列中插入数字序列 1 1 1 1 2，那么在第一个数字 2 被插入后，数字 2 前面的所有数字 1 将不会对结果产生影响。因为按照队列的取出顺序，数字 2 只能在所有的数字 1 被取出之后才能被取出，因此如果数字 1 如果在队列中，那么数字 2 必然也在队列中，使得数字 1 对结果没有影响。</p>
+<p>&ensp;&ensp;按照上面的思路，我们可以设计这样的方法：从队列尾部插入元素时，我们可以提前取出队列中所有比这个元素小的元素，使得队列中只保留对结果有影响的数字。这样的方法等价于要求维持队列单调递减，即要保证每个元素的前面都没有比它小的元素。</p>
+<p>&ensp;&ensp;那么如何高效实现一个始终递减的队列呢？我们只需要在插入每一个元素 value 时，从队列尾部依次取出比当前元素 value 小的元素，直到遇到一个比当前元素大的元素 value’ 即可。</p>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>栈</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法的奥秘-回溯（2）</title>
+    <url>/2021/06/17/backtracing-2/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天分享一下最近学习回溯算法的一些经验与心得！根据百度百科的解释：回溯算法实际上一个类似枚举的搜索尝试过程，主要是在搜索尝试过程中寻找问题的解，当发现已不满足求解条件时，就“回溯”返回，尝试别的路径。回溯法是一种选优搜素法，按选优条件向前搜索，以达到目标。但当探索到某一步时，发现原先选择并不优或达不到目标，就退回一步重新选择，这种走不通就退回再走的技术为回溯法，而满足回溯条件的某个状态的点称为“回溯点”。许多复杂的，规模较大的问题都可以使用回溯法，有“通用解题方法”的美称。直接看题，毁灭吧，赶紧的！</p>
+<p>&ensp;&ensp;我们知道二叉树的前序遍历dfs的代码是这样写的：</p>
+<span id="more"></span>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public void treeDFS(TreeNode root) &#123;</span><br><span class="line">    <span class="keyword">if</span> (root == null)</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    System.out.println(root.val);</span><br><span class="line">    treeDFS(root.left);</span><br><span class="line">    treeDFS(root.right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;这里可以通过仿照一下二叉树，写一下9叉树前序遍历的代码：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public void treeDFS(TreeNode node) &#123;</span><br><span class="line">    // 递归终止条件</span><br><span class="line">    <span class="keyword">if</span>(node == null) &#123;</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(node.val);</span><br><span class="line">    <span class="keyword">for</span>(int i = 0;i &lt; 9;i++) &#123;</span><br><span class="line">        // 一些操作，可有可无，视情况而定</span><br><span class="line">        treeDfs(<span class="string">&quot;第i个节点&quot;</span>);</span><br><span class="line">        // 回退操作，可有可无，视情况而定</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;这就是回溯算法的基本框架，几乎所有回溯算法都离不开这个框架，接下来我们看几个实例。</p>
+<p>1、全排列</p>
+<p>给定一个 没有重复 数字的序列，返回其所有可能的全排列。</p>
+<p>示例:</p>
+<p>输入: [1,2,3]</p>
+<p>输出:</p>
+<p>[<br>  [1,2,3],</p>
+<p>  [1,3,2],</p>
+<p>  [2,1,3],</p>
+<p>  [2,3,1],</p>
+<p>  [3,1,2],</p>
+<p>  [3,2,1]</p>
+<p>]<br>这其实是一颗三叉树，根据上面的框架，写出代码：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; permute(int[] nums) &#123;</span><br><span class="line">        List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">        Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">        int n = nums.length;</span><br><span class="line">        boolean[] used = new boolean[n];</span><br><span class="line">        dfs(res, deque, n, 0, used, nums);</span><br><span class="line">        <span class="built_in">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * dfs</span><br><span class="line">     * @param res res </span><br><span class="line">     * @param deque deque</span><br><span class="line">     * @param n  n</span><br><span class="line">     * @param first 层数</span><br><span class="line">     * @param used 是否有使用到数组标记</span><br><span class="line">     * @param nums nums</span><br><span class="line">     */</span><br><span class="line">    private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int n, int first, boolean[] used, int[] nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> (first == n) &#123;</span><br><span class="line">            res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">            <span class="built_in">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        // 注意i= 0</span><br><span class="line">        <span class="keyword">for</span> (int i = 0; i &lt; n; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!used[i]) &#123;</span><br><span class="line">                deque.addLast(nums[i]);</span><br><span class="line">                used[i] = <span class="literal">true</span>;</span><br><span class="line">                // 这里是first +1 ,first代表层数</span><br><span class="line">                dfs(res, deque, n, first + 1, used, nums);</span><br><span class="line">                deque.removeLast();</span><br><span class="line">                used[i] = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>for 循环 i 值是从0开始的，这样才能出现【3,2，1】这样的集合。</li>
+<li>dfs 递归传的是first + 1，而不是i+1,因为first这里表示的是遍历层数，而i表示的是遍历数组的索引。也可以去掉first参数。直接将deque.size() == n 作为递归终止条件。</li>
+</ul>
+<p>2、全排列 || </p>
+<p>给定一个可包含重复数字的序列 nums ，按任意顺序 返回所有不重复的全排列。</p>
+<p>示例 1：</p>
+<p>输入：nums = [1,1,2]</p>
+<p>输出：</p>
+<p>[[1,1,2],</p>
+<p> [1,2,1],</p>
+<p> [2,1,1]]</p>
+<p>示例 2：</p>
+<p>输入：nums = [1,2,3]</p>
+<p>输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]</p>
+<p>直接看代码</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; permuteUnique(int[] nums) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; list = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    boolean[] used = new boolean[nums.length];</span><br><span class="line">    // 有重复的队列，先排序</span><br><span class="line">    Arrays.sort(nums);</span><br><span class="line">    dfs(list, deque, nums, 0, used);</span><br><span class="line">    <span class="built_in">return</span> list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; list, Deque&lt;Integer&gt; deque, int[] nums, int first, boolean[] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (first == nums.length) &#123;</span><br><span class="line">        list.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; nums.length; i++) &#123;</span><br><span class="line">        // 去重</span><br><span class="line">        <span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; nums[i] == nums[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        used[i] = <span class="literal">true</span>;</span><br><span class="line">        dfs(list, deque, nums, first + 1, used);</span><br><span class="line">        used[i] = <span class="literal">false</span>;</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里需要去重，最简单的做法就是先将nums排序，这样相同的元素就在一起了，然后在第一题的基础上加上这句就行了</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; nums[i] == nums[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">    <span class="built_in">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3、子集</p>
+<p>给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。<br>解集 不能 包含重复的子集。你可以按 任意顺序 返回解集。</p>
+<p>示例 1：</p>
+<p>输入：nums = [1,2,3]</p>
+<p>输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
+<p>示例 2：</p>
+<p>输入：nums = [0]</p>
+<p>输出：[[],[0]]</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; subsets(int[] nums) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, nums, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int[] nums, int index) &#123;</span><br><span class="line">    res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; nums.length; i++) &#123;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        dfs(res, deque, nums, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点:</p>
+<ul>
+<li>for 循环 i的初始值应该是index,如果i = 0的话，nums[i]就重复了</li>
+<li>dfs递归时传的index= i+ 1，而不是index+ 1，如果传的是index + 1,那么for循环那么多次递归进去的值都是一样的。</li>
+</ul>
+<p>4、子集||</p>
+<p>给定一个可能包含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。</p>
+<p>说明：解集不能包含重复的子集。</p>
+<p>示例:</p>
+<p>输入: [1,2,2]</p>
+<p>输出:</p>
+<p>[</p>
+<p>  [2],</p>
+<p>  [1],</p>
+<p>  [1,2,2],</p>
+<p>  [2,2],</p>
+<p>  [1,2],</p>
+<p>  []</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public List&lt;List&lt;Integer&gt;&gt; subsetsWithDup(int[] nums) &#123;</span><br><span class="line">    Arrays.sort(nums);</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, nums, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int[] nums, int index) &#123;</span><br><span class="line">    res.add(new ArrayList&lt;Integer&gt;(deque));</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; nums.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; nums[i] == nums[i - 1]) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        dfs(res, deque, nums, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里跟第二题求全排列一样的思路，要去重就先排序，将重复的元素放在一起，然后通过这行代码过滤掉：<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (i &gt; index &amp;&amp; nums[i] == nums[i - 1]) &#123;</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>5、组合求和</p>
+<p>给定一个无重复元素的数组 candidates 和一个目标数 target ，找出 candidates 中所有可以使数字和为 target 的组合。</p>
+<p>candidates 中的数字可以无限制重复被选取。</p>
+<p>说明：</p>
+<p>所有数字（包括 target）都是正整数。</p>
+<p>解集不能包含重复的组合。 </p>
+<p>示例 1：</p>
+<p>输入：candidates = [2,3,6,7], target = 7,</p>
+<p>所求解集为：</p>
+<p>[</p>
+<p>  [7],</p>
+<p>  [2,2,3]</p>
+<p>]</p>
+<p>示例 2：</p>
+<p>输入：candidates = [2,3,5], target = 8,</p>
+<p>所求解集为：</p>
+<p>[</p>
+<p>  [2,2,2,2],</p>
+<p>  [2,3,3],</p>
+<p>  [3,5]</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; combinationSum(int[] candidates, int target) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    dfs(res, new ArrayList&lt;&gt;(), 0, candidates, target);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, List&lt;Integer&gt; list, int index, int[] arr, int left) &#123;</span><br><span class="line">    <span class="keyword">if</span> (left == 0) &#123;</span><br><span class="line">        res.add(new ArrayList&lt;&gt;(list));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; arr.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (arr[i] &lt;= left) &#123;</span><br><span class="line">            list.add(arr[i]);</span><br><span class="line">            // 注意这里递归的index取 i,而不是index，取index的话会遍历回去</span><br><span class="line">            dfs(res, list, i, arr, left - arr[i]);</span><br><span class="line">            list.remove(list.size() - 1);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意点：</p>
+<ul>
+<li><p>这里的递归终止条件是left == 0</p>
+</li>
+<li><p>dfs递归时的index应该取值i,这样才会遍历到同一个元素。</p>
+</li>
+</ul>
+<p>6、组合</p>
+<p>给定两个整数 n 和 k，返回 1 … n 中所有可能的 k 个数的组合。</p>
+<p>示例:</p>
+<p>输入: n = 4, k = 2</p>
+<p>输出:</p>
+<p>[</p>
+<p>  [2,4],</p>
+<p>  [3,4],</p>
+<p>  [2,3],</p>
+<p>  [1,2],</p>
+<p>  [1,3],</p>
+<p>  [1,4],</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"> public List&lt;List&lt;Integer&gt;&gt; combine(int n, int k) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, n, k, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int n, int k, int index) &#123;</span><br><span class="line">    <span class="keyword">if</span> (deque.size() == k) &#123;</span><br><span class="line">        res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        deque.addLast(i + 1);</span><br><span class="line">        dfs(res, deque, n, k, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里需要注意递归终止条件是deque.size() == k</li>
+</ul>
+<p>通过上面的分析，我们发现其实递归算法都离不开那个框架，只不过需要根据具体的题目改变一些递归终止条件，递归前要做的事，递归的传值。接下来看一题综合的，起码用到了上面的三道题的套路。</p>
+<p>7、活字印刷</p>
+<p>你有一套活字字模 tiles，其中每个字模上都刻有一个字母 tiles[i]。返回你可以印出的非空字母序列的数目。</p>
+<p>注意：本题中，每个活字字模只能使用一次。</p>
+<p>示例 1：</p>
+<p>输入：”AAB”</p>
+<p>输出：8</p>
+<p>解释：可能的序列为 “A”, “B”, “AA”, “AB”, “BA”, “AAB”, “ABA”, “BAA”。</p>
+<p>示例 2：</p>
+<p>输入：”AAABBC”</p>
+<p>输出：188</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">private int count = 0;</span><br><span class="line"></span><br><span class="line">public int numTilePossibilities(String tiles) &#123;</span><br><span class="line">    char[] arr = tiles.toCharArray();</span><br><span class="line">    Arrays.sort(arr);</span><br><span class="line">    boolean[] used = new boolean[arr.length];</span><br><span class="line">    dfs(arr, used, 0);</span><br><span class="line">    <span class="built_in">return</span> count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(char[] arr, boolean[] used, int index) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index != 0) &#123;</span><br><span class="line">        count++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; arr.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; arr[i] == arr[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        used[i] = <span class="literal">true</span>;</span><br><span class="line">        dfs(arr, used, index + 1);</span><br><span class="line">        used[i] = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li><p>这题其实就是求不重复的，能反过来的（相当于全排列）子集，所以我们用到了三个套路：</p>
+</li>
+<li><p>全排列：used标记数组，并且i 从0开始遍历。</p>
+</li>
+<li><p>不重复：先排序，再相邻元素相同并且上一个元素已经遍历过的剪枝判断</p>
+</li>
+<li><p>子集：只要index &gt; 0 ,每dfs一次，子集的个数就加1，另外子集其实不需要显示写终止条件的。</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>回溯</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>XXL-JOB任务一直卡在进行中状态排查</title>
+    <url>/2021/06/17/xxl-job-running-check/</url>
+    <content><![CDATA[<p>&ensp;&ensp;最近发现 xxl-job（xxl-job是一个轻量级分布式任务调度平台） 的任务一直卡在进行中状态，期间 dump 过执行器的进程，发现线程已经没了，而且没有任何异常日志，网上查看原因，这是作者给的答案：</p>
+<p><img src="/images/xxl-job-running-check/1.png" alt="avatar"></p>
+<p>&ensp;&ensp;于是查询任务调度日志，发现确实没有回调。但是仍旧不明白线程为啥突然没了，而且还不报错。..后来就看 xxl-job 源码，看看 xxl-job 的调度原理，但因为有工作原因也还没查到，先放一边了。</p>
+<span id="more"></span>
+
+<p>&ensp;&ensp;直到今天补偿优惠券发放，发现没发完，一看任务还在执行中，dump 下进程却发现线程已经没了，才知道又碰到了这问题，还是没有任何异常日志。</p>
+<p><img src="/images/xxl-job-running-check/2.png" alt="avatar"></p>
+<p>&ensp;&ensp;看上图处于运行中的任务（因为截图慢了，当时第一个 taskId = 88 的任务调度时间是 2020-11-15 04:05:20），调度机器和第三个任务是同一个（因为该任务阻塞处理策略设置的是丢弃后续调度，所以碰到这种情况肯定不正常（第三个任务不应该处于进行中状态，第一个任务确实是处于运行中，只是任务运行时间很长））。</p>
+<p>&ensp;&ensp;仔细看这张图，发现第二个任务 taskId = 86 这个也不应该一直处于进行中状态，这个任务执行时间很短的，而且它调度的时间和第一个调度任务调度时间非常接近，难道这期间发生了什么？</p>
+<p>&ensp;&ensp;开始排查这个运行的比较快的任务。</p>
+<p><img src="/images/xxl-job-running-check/3.png" alt="avatar"></p>
+<p>&ensp;&ensp;如上图，查询这个任务的关键字日志，发现了一条 main 线程打的日志很特别：xxl-job register jobhandler success ,好像见过，搜一下看看</p>
+<p><img src="/images/xxl-job-running-check/4.png" alt="avatar"></p>
+<p>&ensp;&ensp;有很多条，想起这是注册任务的日志。。查看源码</p>
+<p><img src="/images/xxl-job-running-check/5.png" alt="avatar"></p>
+<p>&ensp;&ensp;发现是在启动时注册的，难道程序重启了？</p>
+<p>&ensp;&ensp;再次搜索重启关键字</p>
+<p><img src="/images/xxl-job-running-check/6.png" alt="avatar"></p>
+<p>&ensp;&ensp;还真的重启了..,难怪任务线程突然没了，早应该想到的。</p>
+<p><img src="/images/xxl-job-running-check/12.webp" alt="avatar"></p>
+<p>&ensp;&ensp;这是重启前与重启后的两条日志（后面要用到），查看包发布记录没人操作过进程，难道包发布自动重启了？</p>
+<p>&ensp;&ensp;于是联系运维开发热线，确认了包发布不会自动重启进程，除非进程挂了，包发布会自动拉起。</p>
+<p><img src="/images/xxl-job-running-check/7.png" alt="avatar"></p>
+<p>&ensp;&ensp;查看监控，也能看到进程确认重启了，但重启前内存好好的，full gc 却发生在重启后。。这时突然想到测试机有碰到过由于系统内存不足导致进程被杀的情况，于是看了一下机器内存</p>
+<p><img src="/images/xxl-job-running-check/8.png" alt="avatar"></p>
+<p>&ensp;&ensp;确实剩余不多了，完全有可能，于是查询相关日志。</p>
+<p><img src="/images/xxl-job-running-check/9.png" alt="avatar"></p>
+<p>&ensp;&ensp;可以看到光标那行，04:04:28 有个 Java 进程被杀了，时间刚刚对应上面图中进程重启前的最后一条日志。</p>
+<p>&ensp;&ensp;至此，终于破案了，<strong>系统内存不足，导致进程被杀，来不及回调 xxl-job,并且没有任何异常，然后再被包发布拉起，xxl-job 中的任务也就一直处于进行中了。</strong></p>
+<p><img src="/images/xxl-job-running-check/10.png" alt="avatar"></p>
+<p>&ensp;&ensp;xxl-job 确实做了这种情况的处理。但是没有生效，阅读源码发现</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">            // monitor</span><br><span class="line">while (!toStop) &#123;</span><br><span class="line">	try &#123;</span><br><span class="line">		// 任务结果丢失处理：调度记录停留在 &quot;运行中&quot; 状态超过10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败；</span><br><span class="line">		Date losedTime = DateUtil.addMinutes(new Date(), -10);</span><br><span class="line">		List&lt;Long&gt; losedJobIds  = XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().findLostJobIds(losedTime);</span><br><span class="line">		if (losedJobIds!=null &amp;&amp; losedJobIds.size()&gt;0) &#123;</span><br><span class="line">			for (Long logId: losedJobIds) &#123;</span><br><span class="line">				XxlJobLog jobLog = new XxlJobLog();</span><br><span class="line">				jobLog.setId(logId);</span><br><span class="line">				jobLog.setHandleTime(new Date());</span><br><span class="line">				jobLog.setHandleCode(ReturnT.FAIL_CODE);</span><br><span class="line">				jobLog.setHandleMsg( I18nUtil.getString(&quot;joblog_lost_fail&quot;) );</span><br><span class="line">				XxlJobAdminConfig.getAdminConfig().getXxlJobLogDao().updateHandleInfo(jobLog);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125; catch (Exception e) &#123;</span><br><span class="line">		if (!toStop) &#123;</span><br><span class="line">			logger.error(&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job, job fail monitor thread error:&#123;&#125;&quot;, e);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">    try &#123;</span><br><span class="line">        TimeUnit.SECONDS.sleep(60);</span><br><span class="line">    &#125; catch (Exception e) &#123;</span><br><span class="line">        if (!toStop) &#123;</span><br><span class="line">            logger.error(e.getMessage(), e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;JobLosedMonitorHelper 类有一个线程在干这事，任务结果丢失处理：调度记录停留在 “运行中” 状态超过 10min，且对应执行器心跳注册失败不在线，则将本地调度主动标记失败。该任务确实有运行超过 10min,但是再看执行器里面的 XxlJobSpringExecutor 类：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationContextAware, SmartInitializingSingleton, DisposableBean &#123;</span><br><span class="line">    private static final Logger logger = LoggerFactory.getLogger(XxlJobSpringExecutor.class);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    // start</span><br><span class="line">    @Override</span><br><span class="line">    public void <span class="function"><span class="title">afterSingletonsInstantiated</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">        // init JobHandler Repository</span><br><span class="line">        /*initJobHandlerRepository(applicationContext);*/</span><br><span class="line"></span><br><span class="line">        // init JobHandler Repository (<span class="keyword">for</span> method)</span><br><span class="line">        initJobHandlerMethodRepository(applicationContext);</span><br><span class="line"></span><br><span class="line">        // refresh GlueFactory</span><br><span class="line">        GlueFactory.refreshInstance(1);</span><br><span class="line"></span><br><span class="line">        // super start</span><br><span class="line">        try &#123;</span><br><span class="line">            super.start();</span><br><span class="line">        &#125; catch (Exception e) &#123;</span><br><span class="line">            throw new RuntimeException(e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    // destroy</span><br><span class="line">    @Override</span><br><span class="line">    public void <span class="function"><span class="title">destroy</span></span>() &#123;</span><br><span class="line">        super.destroy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;destory 方法会去执行 ExecutorRegistryThread 中的 stop 方法：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">public void <span class="function"><span class="title">toStop</span></span>() &#123;</span><br><span class="line">    toStop = <span class="literal">true</span>;</span><br><span class="line">    // interrupt and <span class="built_in">wait</span></span><br><span class="line">    registryThread.interrupt();</span><br><span class="line">    try &#123;</span><br><span class="line">        registryThread.join();</span><br><span class="line">    &#125; catch (InterruptedException e) &#123;</span><br><span class="line">        logger.error(e.getMessage(), e);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;ExecutorRegistryThread 中的 register 线程代码如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">registryThread = new Thread(new <span class="function"><span class="title">Runnable</span></span>() &#123;</span><br><span class="line">	@Override</span><br><span class="line">	public void <span class="function"><span class="title">run</span></span>() &#123;</span><br><span class="line">		// registry</span><br><span class="line">		<span class="keyword">while</span> (!toStop) &#123;</span><br><span class="line">			try &#123;</span><br><span class="line">				RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);</span><br><span class="line">				<span class="keyword">for</span> (AdminBiz adminBiz : XxlJobExecutor.getAdminBizList()) &#123;</span><br><span class="line">					try &#123;</span><br><span class="line">						ReturnT&lt;String&gt; registryResult = adminBiz.registry(registryParam);</span><br><span class="line">						<span class="keyword">if</span> (registryResult != null &amp;&amp; ReturnT.SUCCESS_CODE == registryResult.getCode()) &#123;</span><br><span class="line">							registryResult = ReturnT.SUCCESS;</span><br><span class="line">							logger.debug(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry success, registryParam:&#123;&#125;, registryResult:&#123;&#125;&quot;</span>, new Object[]&#123;registryParam, registryResult&#125;);</span><br><span class="line">							<span class="built_in">break</span>;</span><br><span class="line">						&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">							logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry fail, registryParam:&#123;&#125;, registryResult:&#123;&#125;&quot;</span>, new Object[]&#123;registryParam, registryResult&#125;);</span><br><span class="line">						&#125;</span><br><span class="line">					&#125; catch (Exception e) &#123;</span><br><span class="line">						logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry error, registryParam:&#123;&#125;&quot;</span>, registryParam, e);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125; catch (Exception e) &#123;</span><br><span class="line">				<span class="keyword">if</span> (!toStop) &#123;</span><br><span class="line">					logger.error(e.getMessage(), e);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			try &#123;</span><br><span class="line">				<span class="keyword">if</span> (!toStop) &#123;</span><br><span class="line">					TimeUnit.SECONDS.sleep(RegistryConfig.BEAT_TIMEOUT);</span><br><span class="line">				&#125;</span><br><span class="line">			&#125; catch (InterruptedException e) &#123;</span><br><span class="line">				<span class="keyword">if</span> (!toStop) &#123;</span><br><span class="line">					logger.warn(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job, executor registry thread interrupted, error msg:&#123;&#125;&quot;</span>, e.getMessage());</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		// registry remove</span><br><span class="line">		try &#123;</span><br><span class="line">			RegistryParam registryParam = new RegistryParam(RegistryConfig.RegistType.EXECUTOR.name(), appname, address);</span><br><span class="line">			<span class="keyword">for</span> (AdminBiz adminBiz : XxlJobExecutor.getAdminBizList()) &#123;</span><br><span class="line">				try &#123;</span><br><span class="line">					ReturnT&lt;String&gt; registryResult = adminBiz.registryRemove(registryParam);</span><br><span class="line">					<span class="keyword">if</span> (registryResult != null &amp;&amp; ReturnT.SUCCESS_CODE == registryResult.getCode()) &#123;</span><br><span class="line">						registryResult = ReturnT.SUCCESS;</span><br><span class="line">						logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry-remove success, registryParam:&#123;&#125;, registryResult:&#123;&#125;&quot;</span>, new Object[]&#123;registryParam, registryResult&#125;);</span><br><span class="line">						<span class="built_in">break</span>;</span><br><span class="line">					&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">						logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry-remove fail, registryParam:&#123;&#125;, registryResult:&#123;&#125;&quot;</span>, new Object[]&#123;registryParam, registryResult&#125;);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125; catch (Exception e) &#123;</span><br><span class="line">					<span class="keyword">if</span> (!toStop) &#123;</span><br><span class="line">						logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job registry-remove error, registryParam:&#123;&#125;&quot;</span>, registryParam, e);</span><br><span class="line">					&#125;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; catch (Exception e) &#123;</span><br><span class="line">			<span class="keyword">if</span> (!toStop) &#123;</span><br><span class="line">				logger.error(e.getMessage(), e);</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		logger.info(<span class="string">&quot;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt;&gt; xxl-job, executor registry thread destory.&quot;</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;可以看到 register remove 部分有去 registerRemove 当前执行器地址并且打印相关日志，但是系统强制 kill 了进程，导致 destroy()方法没有执行，执行器没有进行 registerRemove 回调，xxl-job admin 也就无法感知执行器已经失败不在线，导致没有终止这个运行大于 10min 的任务，看重启前的日志也可以说明确实没有进行 registerRemove 回调，所以不管什么系统做好优雅关闭确实很重要。</p>
+]]></content>
+      <categories>
+        <category>问题排查</category>
+      </categories>
+      <tags>
+        <tag>xxl-job</tag>
+        <tag>经验</tag>
+      </tags>
+  </entry>
+</search>
