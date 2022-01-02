@@ -1,41 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>算法的奥秘-回溯（1）</title>
-    <url>/2021/06/17/backtracing-1/</url>
-    <content><![CDATA[<p>&ensp;&ensp;今天分享一道简单的回溯算法题（在我看来并不简单！），毁灭吧，赶紧的！<br>题目：二进制手表<br>描述：二进制手表顶部有 4 个 LED 代表 小时（0-11），底部的 6 个 LED 代表 分钟（0-59）。</p>
-<p>每个 LED 代表一个 0 或 1，最低位在右侧。</p>
-<span id="more"></span>
-
-<p><img src="/images/backtracing/%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%89%8B%E8%A1%A8.webp" alt="avatar"></p>
-<p>例如，上面的二进制手表读取 “3:25”。<br><br>给定一个非负整数 n 代表当前 LED 亮着的数量，返回所有可能的时间。</p>
-<p>示例：<br>输入: n = 1<br><br>返回: [“1:00”, “2:00”, “4:00”, “8:00”, “0:01”, “0:02”, “0:04”, “0:08”, “0:16”, “0:32”]<br><br>提示：</p>
-<ul>
-<li>输出的顺序没有要求。</li>
-<li>小时不会以零开头，比如 “01:00” 是不允许的，应为 “1:00”。</li>
-<li>分钟必须由两位数组成，可能会以零开头，比如 “10:2” 是无效的，应为 “10:02”。</li>
-<li>超过表示范围（小时 0-11，分钟 0-59）的数据将会被舍弃，也就是说不会出现 “13:00”, “0:61” 等时间。</li>
-</ul>
-<p>分析：题目需要返回所有可能的时间，可以对手表建模，时钟定义一个数组hours,包含4盏灯，代表数值分别为【1,2，4,8】，分钟定义一个数组mins，包含6盏灯，代表数值分别为【1,2，4,8，16,32】。对于输入n,需要从hours中取出i盏灯，mins中取出n-j盏灯，并将合并的结果存入list。这就是子集的变形，很容易想到用回溯求解，但是做起来还是有一些注意点值得关注，直接看代码！</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">int[] hours = new int[]&#123;1, 2, 4, 8&#125;;</span><br><span class="line">int[] mins = new int[]&#123;1, 2, 4, 8, 16, 32&#125;;</span><br><span class="line"></span><br><span class="line">public List&lt;String&gt; readBinaryWatch(int num) &#123;</span><br><span class="line">    List&lt;String&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    dfs(res, num, 0, 0, 0, 0);</span><br><span class="line">    <span class="built_in">return</span> new ArrayList&lt;&gt;(res);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * dfs</span><br><span class="line"> *</span><br><span class="line"> * @param res    结果集</span><br><span class="line"> * @param num    灯的个数</span><br><span class="line"> * @param indexH hours的索引</span><br><span class="line"> * @param indexM mins的索引</span><br><span class="line"> * @param hour   当前hour的值</span><br><span class="line"> * @param min    当前min的值</span><br><span class="line"> */</span><br><span class="line">private void dfs(List&lt;String&gt; res, int num, int indexH, int indexM, int hour, int min) &#123;</span><br><span class="line">    <span class="keyword">if</span> (num == 0) &#123;</span><br><span class="line">        // 递归结束条件为num == 0,注意不是indexH + indexM == num, 因为indexH表示的是hours的索引。</span><br><span class="line">        String minStr = (0 &lt;= min &amp;&amp; min &lt;= 9) ? <span class="string">&quot;0&quot;</span> + min : min + <span class="string">&quot;&quot;</span>;</span><br><span class="line">        String str = hour + <span class="string">&quot;:&quot;</span> + minStr;</span><br><span class="line">        res.add(str);</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    // 这种循环结构就是求hours的子集，此题就是求hours求指定长度的各个子集的和</span><br><span class="line">    <span class="keyword">for</span> (int i = indexH; i &lt; hours.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hour + hours[i] &gt;= 12) &#123;</span><br><span class="line">            // 如果大于12，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        dfs(res, num - 1, i + 1, indexM, hour + hours[i], min);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变hour的值</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = indexM; i &lt; mins.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (min + mins[i] &gt;= 60) &#123;</span><br><span class="line">            // 如果大于60，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        // 注意这里递归到mins时，并不需要再次递归到hours,不然结果会重复,所以indexH填4</span><br><span class="line">        dfs(res, num - 1, 4, i + 1, hour, min + mins[i]);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变min的值</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意点：</p>
-<ul>
-<li>题目递归结束的条件是num == 0，而不是indexH + indexM == num。</li>
-<li>回溯算法一般都可以通过剪枝减少递归，具体看代码中的break片段。</li>
-<li>此题有两个求子集的过程，所以有两个for循环，注意下面一个循环中的dfs，indexH的取值不能传当前值了（如果传了当前值，递归进去又会走一遍hours循环，这样结果就有重复值了），所以直接取4。</li>
-<li>回溯算法一般都需要在回溯时做“还原”操作，但是这里因为dfs前并没有改正hour和min的值，所以dfs后不用“还原”。</li>
-</ul>
-<p>这是自己的一些想法，如果你有更好的想法欢迎留言！</p>
-]]></content>
-      <categories>
-        <category>数据结构与算法</category>
-      </categories>
-      <tags>
-        <tag>回溯</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>堆的应用-合并有序小文件</title>
     <url>/2021/06/07/mergeFiles/</url>
     <content><![CDATA[<p>&ensp;&ensp;假设我们有 100 个小文件，每个文件的大小是 100MB，每个文件中存储的都是有序的字符串。我们希望将这些 100 个小文件合并成一个有序的大文件。这里就会用到优先级队列。</p>
@@ -70,66 +35,32 @@
       </tags>
   </entry>
   <entry>
-    <title>算法的奥秘-回溯（3）</title>
-    <url>/2021/06/17/backtracing-3/</url>
-    <content><![CDATA[<p>&ensp;&ensp;今天打算分享下回溯算法中的另一种题型–是否存在***，这种题型一般都不用走完整个dfs过程，如果存在就可以直接返回了，这样相当于剪枝了，可以很大程度提升算法执行时间。那还等什么，毁灭吧，赶紧的！</p>
-<p>1、单词搜素</p>
-<p>给定一个二维网格和一个单词，找出该单词是否存在于网格中。</p>
-<p>单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。</p>
+    <title>算法的奥秘-回溯（1）</title>
+    <url>/2021/06/17/backtracing-1/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天分享一道简单的回溯算法题（在我看来并不简单！），毁灭吧，赶紧的！<br>题目：二进制手表<br>描述：二进制手表顶部有 4 个 LED 代表 小时（0-11），底部的 6 个 LED 代表 分钟（0-59）。</p>
+<p>每个 LED 代表一个 0 或 1，最低位在右侧。</p>
 <span id="more"></span>
 
-<p>示例:</p>
-<p>board =</p>
-<p>[</p>
-<p>  [‘A’,’B’,’C’,’E’],</p>
-<p>  [‘S’,’F’,’C’,’S’],</p>
-<p>  [‘A’,’D’,’E’,’E’]</p>
-<p>]</p>
-<p>给定 word = “ABCCED”, 返回 true</p>
-<p>给定 word = “SEE”, 返回 true</p>
-<p>给定 word = “ABCB”, 返回 false</p>
-<p>提示：</p>
+<p><img src="/images/backtracing/%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%89%8B%E8%A1%A8.webp" alt="avatar"></p>
+<p>例如，上面的二进制手表读取 “3:25”。<br><br>给定一个非负整数 n 代表当前 LED 亮着的数量，返回所有可能的时间。</p>
+<p>示例：<br>输入: n = 1<br><br>返回: [“1:00”, “2:00”, “4:00”, “8:00”, “0:01”, “0:02”, “0:04”, “0:08”, “0:16”, “0:32”]<br><br>提示：</p>
 <ul>
-<li><p>board 和 word 中只包含大写和小写英文字母。</p>
-</li>
-<li><p>1 &lt;= board.length &lt;= 200</p>
-</li>
-<li><p>1 &lt;= board[i].length &lt;= 200</p>
-</li>
-<li><p>1 &lt;= word.length &lt;= 10^3</p>
-</li>
+<li>输出的顺序没有要求。</li>
+<li>小时不会以零开头，比如 “01:00” 是不允许的，应为 “1:00”。</li>
+<li>分钟必须由两位数组成，可能会以零开头，比如 “10:2” 是无效的，应为 “10:02”。</li>
+<li>超过表示范围（小时 0-11，分钟 0-59）的数据将会被舍弃，也就是说不会出现 “13:00”, “0:61” 等时间。</li>
 </ul>
-<p>代码：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public boolean exist(char[][] board, String word) &#123;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; board.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (int j = 0; j &lt; board[i].length; j++) &#123;</span><br><span class="line">            boolean[][] used = new boolean[board.length][board[i].length];</span><br><span class="line">            <span class="keyword">if</span> (dfs(i, j, board, word, 0, used)) &#123;</span><br><span class="line">                <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean dfs(int row, int col, char[][] board, String word, int index, boolean[][] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == word.length()) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (row &lt; 0 || row &gt;= board.length || col &lt; 0 || col &gt;= board[row].length || board[row][col] != word.charAt(index) || used[row][col]) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    used[row][col] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    boolean res = dfs(row + 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col + 1, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row - 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col - 1, board, word, index + 1, used);</span><br><span class="line">    used[row][col] = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意点：</p>
-<ol>
-<li><p>可以看到连续四个dfs那里，用的是短路或，这样保证了只要存在true的结果，其他的dfs也就不用递归进去了，也就达到了剪枝的效果。</p>
-</li>
-<li><p>注意这里dfs进去前没有判断边界条件，而是放在了进去后再进行判断，有时候知道怎么做就是写不出来，这点也要注意。</p>
-</li>
-</ol>
-<br>
-2、累加数
-
-<p>累加数是一个字符串，组成它的数字可以形成累加序列。</p>
-<p>一个有效的累加序列必须至少包含 3 个数。除了最开始的两个数以外，字符串中的其他数都等于它之前两个数相加的和。</p>
-<p>给定一个只包含数字 ‘0’-‘9’ 的字符串，编写一个算法来判断给定输入是否是累加数。</p>
-<p>说明: 累加序列里的数不会以 0 开头，所以不会出现 1, 2, 03 或者 1, 02, 3 的情况。</p>
-<p>示例 1:</p>
-<p>输入: “112358”</p>
-<p>输出: true </p>
-<p>解释: 累加序列为: 1, 1, 2, 3, 5, 8 。1 + 1 = 2, 1 + 2 = 3, 2 + 3 = 5, 3 + 5 = 8</p>
-<p>示例 2:</p>
-<p>输入: “199100199”</p>
-<p>输出: true </p>
-<p>解释: 累加序列为: 1, 99, 100, 199。1 + 99 = 100, 99 + 100 = 199</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private String s;</span><br><span class="line"></span><br><span class="line">private int n;</span><br><span class="line"></span><br><span class="line">public boolean isAdditiveNumber(String num) &#123;</span><br><span class="line">    s = num;</span><br><span class="line">    n = s.length();</span><br><span class="line">    <span class="built_in">return</span> dfs(0, 0, 0, 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> *</span><br><span class="line"> * @param index 下标</span><br><span class="line"> * @param sum 前两个数之和</span><br><span class="line"> * @param previous 前一个数</span><br><span class="line"> * @param count 已经添加的个数</span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> */</span><br><span class="line">private boolean dfs(int index, long sum, long previous, int count) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 3) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // value值用于累加值</span><br><span class="line">    long value = 0;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        // 第一个数是0，而且当前value大于一位，直接<span class="built_in">break</span></span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; s.charAt(index) == <span class="string">&#x27;0&#x27;</span>) &#123;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        value = value * 10 + s.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 2) &#123;</span><br><span class="line">            <span class="keyword">if</span> (value &lt; sum) &#123;</span><br><span class="line">                // 继续累加value</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (value &gt; sum) &#123;</span><br><span class="line">                // 累加value无意义，直接<span class="built_in">break</span></span><br><span class="line">                <span class="built_in">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 忽略<span class="literal">false</span>结果，妙！</span><br><span class="line">        <span class="keyword">if</span> (dfs(i + 1, previous + value, value, count + 1)) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>分析：题目需要返回所有可能的时间，可以对手表建模，时钟定义一个数组hours,包含4盏灯，代表数值分别为【1,2，4,8】，分钟定义一个数组mins，包含6盏灯，代表数值分别为【1,2，4,8，16,32】。对于输入n,需要从hours中取出i盏灯，mins中取出n-j盏灯，并将合并的结果存入list。这就是子集的变形，很容易想到用回溯求解，但是做起来还是有一些注意点值得关注，直接看代码！</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">int[] hours = new int[]&#123;1, 2, 4, 8&#125;;</span><br><span class="line">int[] mins = new int[]&#123;1, 2, 4, 8, 16, 32&#125;;</span><br><span class="line"></span><br><span class="line">public List&lt;String&gt; readBinaryWatch(int num) &#123;</span><br><span class="line">    List&lt;String&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    dfs(res, num, 0, 0, 0, 0);</span><br><span class="line">    <span class="built_in">return</span> new ArrayList&lt;&gt;(res);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> * dfs</span><br><span class="line"> *</span><br><span class="line"> * @param res    结果集</span><br><span class="line"> * @param num    灯的个数</span><br><span class="line"> * @param indexH hours的索引</span><br><span class="line"> * @param indexM mins的索引</span><br><span class="line"> * @param hour   当前hour的值</span><br><span class="line"> * @param min    当前min的值</span><br><span class="line"> */</span><br><span class="line">private void dfs(List&lt;String&gt; res, int num, int indexH, int indexM, int hour, int min) &#123;</span><br><span class="line">    <span class="keyword">if</span> (num == 0) &#123;</span><br><span class="line">        // 递归结束条件为num == 0,注意不是indexH + indexM == num, 因为indexH表示的是hours的索引。</span><br><span class="line">        String minStr = (0 &lt;= min &amp;&amp; min &lt;= 9) ? <span class="string">&quot;0&quot;</span> + min : min + <span class="string">&quot;&quot;</span>;</span><br><span class="line">        String str = hour + <span class="string">&quot;:&quot;</span> + minStr;</span><br><span class="line">        res.add(str);</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    // 这种循环结构就是求hours的子集，此题就是求hours求指定长度的各个子集的和</span><br><span class="line">    <span class="keyword">for</span> (int i = indexH; i &lt; hours.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (hour + hours[i] &gt;= 12) &#123;</span><br><span class="line">            // 如果大于12，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        dfs(res, num - 1, i + 1, indexM, hour + hours[i], min);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变hour的值</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = indexM; i &lt; mins.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (min + mins[i] &gt;= 60) &#123;</span><br><span class="line">            // 如果大于60，后面的循环不用看了，直接<span class="built_in">break</span></span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        // 注意这里递归到mins时，并不需要再次递归到hours,不然结果会重复,所以indexH填4</span><br><span class="line">        dfs(res, num - 1, 4, i + 1, hour, min + mins[i]);</span><br><span class="line">        // dfs后不用回溯是因为dfs前并没有改变min的值</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>注意点：</p>
 <ul>
-<li>这里dfs进去直接忽略了false结果，试想这里如果不忽略false，也返回一个false结果，那么只要一次尝试不成功就不会继续尝试了,这样就没有达到穷举的效果，而一点返回true，说明我们这种字符串分割方法就是我们要的结果，因此可以直接返回true，一层接着一层，最终最外层返回true，给到调用方，结束递归。</li>
+<li>题目递归结束的条件是num == 0，而不是indexH + indexM == num。</li>
+<li>回溯算法一般都可以通过剪枝减少递归，具体看代码中的break片段。</li>
+<li>此题有两个求子集的过程，所以有两个for循环，注意下面一个循环中的dfs，indexH的取值不能传当前值了（如果传了当前值，递归进去又会走一遍hours循环，这样结果就有重复值了），所以直接取4。</li>
+<li>回溯算法一般都需要在回溯时做“还原”操作，但是这里因为dfs前并没有改正hour和min的值，所以dfs后不用“还原”。</li>
 </ul>
+<p>这是自己的一些想法，如果你有更好的想法欢迎留言！</p>
 ]]></content>
       <categories>
         <category>数据结构与算法</category>
@@ -305,23 +236,72 @@
       </tags>
   </entry>
   <entry>
-    <title>小公司的大梦想 - 秒杀</title>
-    <url>/2021/06/17/spide/</url>
-    <content><![CDATA[<p>&ensp;&ensp;最近工作上有一个限量点餐的需求，本来公司人不多，但是谁知餐厅供应的特色腊肠牛肉饭特少，而员工对这特色饭情有独钟，导致餐厅一开始营业员工就开始疯抢，这也就形成了电商行业中著名的秒杀情景。</p>
-<p>&ensp;&ensp;而此时我以前的代码实现的下单方案是：先从数据库中查询出该时段该菜式的销售量，再与该菜式总的库存进行比较，如果大于库存，直接返回“菜式已售罄”；如果小于库存，则进行后面的下单流程。有一点经验或认知的朋友，一眼就能看出这里存在并发问题。可能是因为一直被动接受业务的原因，直到和同时聊起项目被同事怀疑代码有并发bug时，才仔细一想确实有bug。这里需要指出的是项目使用的语言是Node.js，尽管Node是单线程的，但是单线程只是针对一个请求来说，对于多个请求，还是存在并发问题的。这其中的道理可以类比Java的指令重排：对于单线程，再怎么指令重排也不会影响到线程的执行结果；但是对于别的线程看到的结果就有可能不同了。这也是Java线程安全问题的本质原因。</p>
+    <title>算法的奥秘-回溯（3）</title>
+    <url>/2021/06/17/backtracing-3/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天打算分享下回溯算法中的另一种题型–是否存在***，这种题型一般都不用走完整个dfs过程，如果存在就可以直接返回了，这样相当于剪枝了，可以很大程度提升算法执行时间。那还等什么，毁灭吧，赶紧的！</p>
+<p>1、单词搜素</p>
+<p>给定一个二维网格和一个单词，找出该单词是否存在于网格中。</p>
+<p>单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。</p>
 <span id="more"></span>
 
-<p>&ensp;&ensp;经过一番查阅资料和请教大佬，最终决定使用redis的列表来做队列，基于排队的理念来实现“秒杀”。具体的将每个菜式的库存保存在Redis中，然后对于每个时段每个菜式的请求用一个list保存（餐厅的菜式供应是分时段的，每个时段开始时菜式库存都会初始化为原来值）。当请求来了先把请求放到队列的右边，然后从左边取出前‘’库存量‘’个请求，判断当前请求是否在这前“库存量”个请求中。如果在，进行下单操作；如果不在，返回‘’库存不足‘’。对应业务具体思路如下：</p>
-<p>&ensp;&ensp;这里对于为了标识每个请求不同，将请求人的 id+uuid.v4() 作为值rpush进对应的菜式列表，如果请求n份菜式，就rpush n次值。因为业务同时需要取消订单、修改订单，取消订单时需要找到添加订单时push进去的值并删除，因此需要将添加订单时push进去的值存起来，这里使用订单orderId做key，添加订单时push进去的值做value存入Redis中；修改订单麻烦一点，因为加菜会rpush进新的请求并判断请求是不是在前“库存量”内，所以在生成订单时如果不满足库存要求，就要将该请求删除掉。另外假设下订单时选了一份菜，修改订单时如果将该菜式数量加1，如果此时生成不同的 id + uuid.v4()值存进去的话，等以后将这两份分别删除的话，就得分别拿到这两份菜式对应的id + uuid.v4()值,如果n次修改订单并添加该菜式的数量，就会生成n个id + uuid.v4()值，这样操作起来就比较麻烦了，所以修改订单时如果对同一个菜式进行修改，使用的id + uuid.v4()值就是这个订单生成时对应的id + uuid.v4() 值，这样带来的另一个问题是修改订单时判断list前‘库存量’个请求的数量要跟修改订单后的数量一致才表示能够进行修改操作，否则返回“库存不足”。</p>
-<p>&ensp;&ensp;核心代码实现如下：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** </span><br><span class="line">  * &#123;Array&#125; dishes </span><br><span class="line">  * &#123;Number&#125; dishes[*].dishesId  - 菜式id</span><br><span class="line">  * &#123;Number&#125; dishes[*].number    - 菜式数量</span><br><span class="line">  * &#123;String&#125; keyPrefix           - 请求list的key前缀</span><br><span class="line">  * &#123;String&#125; keySuffix           - 请求list的key后缀，由餐厅id + 营业开始时间时间戳组成</span><br><span class="line">  * &#123;String&#125; userValue           - 请求list的请求值，由用户Id + uuid.v4()组成</span><br><span class="line">  * &#123;Object&#125; dishNumberMap &#123;dishId:number&#125;,number表示修改订单成功后该菜式的数量 </span><br><span class="line">  */ </span><br><span class="line"> async <span class="keyword">function</span> checkStock(dishes,keyPrefix,keySuffix,userValue,dishNumberMap)&#123; </span><br><span class="line">     <span class="built_in">let</span> stckMap = &#123;&#125;; // 保存菜式的库存</span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> stock = awaic cache.get(<span class="string">&#x27;stock:&#x27;</span> + dish.dishesId); // 获取菜式库存</span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1)&#123; // -1表示无限库存</span><br><span class="line">             stockMap[dish.dishesId] = stock; </span><br><span class="line">             <span class="keyword">for</span>(<span class="built_in">let</span> i = 0;i&lt;dish.number;i++)&#123; </span><br><span class="line">                 // rpush keyPrefix + dishesId + keySuffix : list </span><br><span class="line">                 await cache.rpush(keyPrefix + dish.dishesId + keySuffix,userValue); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> number = (dishNumberMap &amp;&amp; dishNumberMap[dish.dishesId]) || dish.number; </span><br><span class="line">         <span class="built_in">let</span> stock = stockMap[dish.dishesId]; </span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1) &#123; // -1表示无限库存  </span><br><span class="line">             // 取前stock个请求 </span><br><span class="line">             <span class="built_in">let</span> userValueList = await cache.lrange(keyPrefix + dish.dishesId + keySuffix,0,stock -1); </span><br><span class="line">             <span class="keyword">if</span> ((_.countBy(userValueList)[userValue] || 0) &lt; number)&#123; // 判断数量是否相等 </span><br><span class="line">                 // 队列前stock个请求包含的userVaule个数小于请求的number值，则移除当前请求，为了修改订单时可以push进新的userValue </span><br><span class="line">                 <span class="keyword">for</span> (<span class="built_in">let</span> d of dishes)&#123; </span><br><span class="line">                     await cache.lrem(keyPrefix + d.dishesId + keySuffix, -d.number,userValue); </span><br><span class="line">                 &#125; </span><br><span class="line">                 <span class="built_in">return</span> Promise.reject(<span class="string">&#x27;库存不足&#x27;</span>); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-<p>&ensp;&ensp;总结一下，主要利用了队列来实现对有限资源的请求与分发，以及redis 单线程的特点实现线程安全。当然还有更好的方案，这个方案很简单，但是扩展性很差，而且也不能确定就一定没有问题。如果你有更好的解决方案或者对此有什么问题和见解欢迎留言~</p>
+<p>示例:</p>
+<p>board =</p>
+<p>[</p>
+<p>  [‘A’,’B’,’C’,’E’],</p>
+<p>  [‘S’,’F’,’C’,’S’],</p>
+<p>  [‘A’,’D’,’E’,’E’]</p>
+<p>]</p>
+<p>给定 word = “ABCCED”, 返回 true</p>
+<p>给定 word = “SEE”, 返回 true</p>
+<p>给定 word = “ABCB”, 返回 false</p>
+<p>提示：</p>
+<ul>
+<li><p>board 和 word 中只包含大写和小写英文字母。</p>
+</li>
+<li><p>1 &lt;= board.length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= board[i].length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= word.length &lt;= 10^3</p>
+</li>
+</ul>
+<p>代码：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public boolean exist(char[][] board, String word) &#123;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; board.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (int j = 0; j &lt; board[i].length; j++) &#123;</span><br><span class="line">            boolean[][] used = new boolean[board.length][board[i].length];</span><br><span class="line">            <span class="keyword">if</span> (dfs(i, j, board, word, 0, used)) &#123;</span><br><span class="line">                <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean dfs(int row, int col, char[][] board, String word, int index, boolean[][] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == word.length()) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (row &lt; 0 || row &gt;= board.length || col &lt; 0 || col &gt;= board[row].length || board[row][col] != word.charAt(index) || used[row][col]) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    used[row][col] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    boolean res = dfs(row + 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col + 1, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row - 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col - 1, board, word, index + 1, used);</span><br><span class="line">    used[row][col] = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ol>
+<li><p>可以看到连续四个dfs那里，用的是短路或，这样保证了只要存在true的结果，其他的dfs也就不用递归进去了，也就达到了剪枝的效果。</p>
+</li>
+<li><p>注意这里dfs进去前没有判断边界条件，而是放在了进去后再进行判断，有时候知道怎么做就是写不出来，这点也要注意。</p>
+</li>
+</ol>
+<br>
+2、累加数
+
+<p>累加数是一个字符串，组成它的数字可以形成累加序列。</p>
+<p>一个有效的累加序列必须至少包含 3 个数。除了最开始的两个数以外，字符串中的其他数都等于它之前两个数相加的和。</p>
+<p>给定一个只包含数字 ‘0’-‘9’ 的字符串，编写一个算法来判断给定输入是否是累加数。</p>
+<p>说明: 累加序列里的数不会以 0 开头，所以不会出现 1, 2, 03 或者 1, 02, 3 的情况。</p>
+<p>示例 1:</p>
+<p>输入: “112358”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 1, 2, 3, 5, 8 。1 + 1 = 2, 1 + 2 = 3, 2 + 3 = 5, 3 + 5 = 8</p>
+<p>示例 2:</p>
+<p>输入: “199100199”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 99, 100, 199。1 + 99 = 100, 99 + 100 = 199</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private String s;</span><br><span class="line"></span><br><span class="line">private int n;</span><br><span class="line"></span><br><span class="line">public boolean isAdditiveNumber(String num) &#123;</span><br><span class="line">    s = num;</span><br><span class="line">    n = s.length();</span><br><span class="line">    <span class="built_in">return</span> dfs(0, 0, 0, 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> *</span><br><span class="line"> * @param index 下标</span><br><span class="line"> * @param sum 前两个数之和</span><br><span class="line"> * @param previous 前一个数</span><br><span class="line"> * @param count 已经添加的个数</span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> */</span><br><span class="line">private boolean dfs(int index, long sum, long previous, int count) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 3) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // value值用于累加值</span><br><span class="line">    long value = 0;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        // 第一个数是0，而且当前value大于一位，直接<span class="built_in">break</span></span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; s.charAt(index) == <span class="string">&#x27;0&#x27;</span>) &#123;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        value = value * 10 + s.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 2) &#123;</span><br><span class="line">            <span class="keyword">if</span> (value &lt; sum) &#123;</span><br><span class="line">                // 继续累加value</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (value &gt; sum) &#123;</span><br><span class="line">                // 累加value无意义，直接<span class="built_in">break</span></span><br><span class="line">                <span class="built_in">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 忽略<span class="literal">false</span>结果，妙！</span><br><span class="line">        <span class="keyword">if</span> (dfs(i + 1, previous + value, value, count + 1)) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里dfs进去直接忽略了false结果，试想这里如果不忽略false，也返回一个false结果，那么只要一次尝试不成功就不会继续尝试了,这样就没有达到穷举的效果，而一点返回true，说明我们这种字符串分割方法就是我们要的结果，因此可以直接返回true，一层接着一层，最终最外层返回true，给到调用方，结束递归。</li>
+</ul>
 ]]></content>
       <categories>
-        <category>技术应用</category>
+        <category>数据结构与算法</category>
       </categories>
       <tags>
-        <tag>秒杀</tag>
+        <tag>回溯</tag>
       </tags>
   </entry>
   <entry>
@@ -393,6 +373,45 @@
       </tags>
   </entry>
   <entry>
+    <title>小公司的大梦想 - 秒杀</title>
+    <url>/2021/06/17/spide/</url>
+    <content><![CDATA[<p>&ensp;&ensp;最近工作上有一个限量点餐的需求，本来公司人不多，但是谁知餐厅供应的特色腊肠牛肉饭特少，而员工对这特色饭情有独钟，导致餐厅一开始营业员工就开始疯抢，这也就形成了电商行业中著名的秒杀情景。</p>
+<p>&ensp;&ensp;而此时我以前的代码实现的下单方案是：先从数据库中查询出该时段该菜式的销售量，再与该菜式总的库存进行比较，如果大于库存，直接返回“菜式已售罄”；如果小于库存，则进行后面的下单流程。有一点经验或认知的朋友，一眼就能看出这里存在并发问题。可能是因为一直被动接受业务的原因，直到和同时聊起项目被同事怀疑代码有并发bug时，才仔细一想确实有bug。这里需要指出的是项目使用的语言是Node.js，尽管Node是单线程的，但是单线程只是针对一个请求来说，对于多个请求，还是存在并发问题的。这其中的道理可以类比Java的指令重排：对于单线程，再怎么指令重排也不会影响到线程的执行结果；但是对于别的线程看到的结果就有可能不同了。这也是Java线程安全问题的本质原因。</p>
+<span id="more"></span>
+
+<p>&ensp;&ensp;经过一番查阅资料和请教大佬，最终决定使用redis的列表来做队列，基于排队的理念来实现“秒杀”。具体的将每个菜式的库存保存在Redis中，然后对于每个时段每个菜式的请求用一个list保存（餐厅的菜式供应是分时段的，每个时段开始时菜式库存都会初始化为原来值）。当请求来了先把请求放到队列的右边，然后从左边取出前‘’库存量‘’个请求，判断当前请求是否在这前“库存量”个请求中。如果在，进行下单操作；如果不在，返回‘’库存不足‘’。对应业务具体思路如下：</p>
+<p>&ensp;&ensp;这里对于为了标识每个请求不同，将请求人的 id+uuid.v4() 作为值rpush进对应的菜式列表，如果请求n份菜式，就rpush n次值。因为业务同时需要取消订单、修改订单，取消订单时需要找到添加订单时push进去的值并删除，因此需要将添加订单时push进去的值存起来，这里使用订单orderId做key，添加订单时push进去的值做value存入Redis中；修改订单麻烦一点，因为加菜会rpush进新的请求并判断请求是不是在前“库存量”内，所以在生成订单时如果不满足库存要求，就要将该请求删除掉。另外假设下订单时选了一份菜，修改订单时如果将该菜式数量加1，如果此时生成不同的 id + uuid.v4()值存进去的话，等以后将这两份分别删除的话，就得分别拿到这两份菜式对应的id + uuid.v4()值,如果n次修改订单并添加该菜式的数量，就会生成n个id + uuid.v4()值，这样操作起来就比较麻烦了，所以修改订单时如果对同一个菜式进行修改，使用的id + uuid.v4()值就是这个订单生成时对应的id + uuid.v4() 值，这样带来的另一个问题是修改订单时判断list前‘库存量’个请求的数量要跟修改订单后的数量一致才表示能够进行修改操作，否则返回“库存不足”。</p>
+<p>&ensp;&ensp;核心代码实现如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** </span><br><span class="line">  * &#123;Array&#125; dishes </span><br><span class="line">  * &#123;Number&#125; dishes[*].dishesId  - 菜式id</span><br><span class="line">  * &#123;Number&#125; dishes[*].number    - 菜式数量</span><br><span class="line">  * &#123;String&#125; keyPrefix           - 请求list的key前缀</span><br><span class="line">  * &#123;String&#125; keySuffix           - 请求list的key后缀，由餐厅id + 营业开始时间时间戳组成</span><br><span class="line">  * &#123;String&#125; userValue           - 请求list的请求值，由用户Id + uuid.v4()组成</span><br><span class="line">  * &#123;Object&#125; dishNumberMap &#123;dishId:number&#125;,number表示修改订单成功后该菜式的数量 </span><br><span class="line">  */ </span><br><span class="line"> async <span class="keyword">function</span> checkStock(dishes,keyPrefix,keySuffix,userValue,dishNumberMap)&#123; </span><br><span class="line">     <span class="built_in">let</span> stckMap = &#123;&#125;; // 保存菜式的库存</span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> stock = awaic cache.get(<span class="string">&#x27;stock:&#x27;</span> + dish.dishesId); // 获取菜式库存</span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1)&#123; // -1表示无限库存</span><br><span class="line">             stockMap[dish.dishesId] = stock; </span><br><span class="line">             <span class="keyword">for</span>(<span class="built_in">let</span> i = 0;i&lt;dish.number;i++)&#123; </span><br><span class="line">                 // rpush keyPrefix + dishesId + keySuffix : list </span><br><span class="line">                 await cache.rpush(keyPrefix + dish.dishesId + keySuffix,userValue); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> number = (dishNumberMap &amp;&amp; dishNumberMap[dish.dishesId]) || dish.number; </span><br><span class="line">         <span class="built_in">let</span> stock = stockMap[dish.dishesId]; </span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1) &#123; // -1表示无限库存  </span><br><span class="line">             // 取前stock个请求 </span><br><span class="line">             <span class="built_in">let</span> userValueList = await cache.lrange(keyPrefix + dish.dishesId + keySuffix,0,stock -1); </span><br><span class="line">             <span class="keyword">if</span> ((_.countBy(userValueList)[userValue] || 0) &lt; number)&#123; // 判断数量是否相等 </span><br><span class="line">                 // 队列前stock个请求包含的userVaule个数小于请求的number值，则移除当前请求，为了修改订单时可以push进新的userValue </span><br><span class="line">                 <span class="keyword">for</span> (<span class="built_in">let</span> d of dishes)&#123; </span><br><span class="line">                     await cache.lrem(keyPrefix + d.dishesId + keySuffix, -d.number,userValue); </span><br><span class="line">                 &#125; </span><br><span class="line">                 <span class="built_in">return</span> Promise.reject(<span class="string">&#x27;库存不足&#x27;</span>); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;总结一下，主要利用了队列来实现对有限资源的请求与分发，以及redis 单线程的特点实现线程安全。当然还有更好的方案，这个方案很简单，但是扩展性很差，而且也不能确定就一定没有问题。如果你有更好的解决方案或者对此有什么问题和见解欢迎留言~</p>
+]]></content>
+      <categories>
+        <category>技术应用</category>
+      </categories>
+      <tags>
+        <tag>秒杀</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>ES使用拼音搜索并且highlight搜索结果</title>
+    <url>/2022/01/01/es-pinyin-highlight/</url>
+    <content><![CDATA[<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>基于<a href="https://github.com/medcl/elasticsearch-analysis-pinyin">此pinyin分词器</a> 实现搜索,自定义analyzer,使用type ngarm当做tokenizer,使用type pinyin当做filter,并且设置<code>&quot;term_vector&quot;: &quot;with_positions_offsets&quot;</code></p>
+<span id="more"></span>
+<h3 id="🌰"><a href="#🌰" class="headerlink" title="🌰"></a>🌰</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">PUT es_pinyin_highlight</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;mappings&quot;</span> : &#123;</span><br><span class="line">      <span class="string">&quot;dynamic&quot;</span> : <span class="string">&quot;false&quot;</span>,</span><br><span class="line">      <span class="string">&quot;properties&quot;</span> : &#123;</span><br><span class="line">        <span class="string">&quot;text&quot;</span>: &#123;</span><br><span class="line">          <span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>,</span><br><span class="line">          <span class="string">&quot;fields&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;pinyin&quot;</span>:&#123;</span><br><span class="line">              <span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>,</span><br><span class="line">              <span class="string">&quot;analyzer&quot;</span>: <span class="string">&quot;pinyin_analyzer&quot;</span>,</span><br><span class="line">              <span class="string">&quot;search_analyzer&quot;</span>: <span class="string">&quot;standard&quot;</span>,</span><br><span class="line">              <span class="string">&quot;term_vector&quot;</span>: <span class="string">&quot;with_positions_offsets&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;settings&quot;</span> : &#123;</span><br><span class="line">      <span class="string">&quot;index&quot;</span> : &#123;</span><br><span class="line">        <span class="string">&quot;analysis&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;analyzer&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;pinyin_analyzer&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;tokenizer&quot;</span>: <span class="string">&quot;my_ngram&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;filter&quot;</span>: [</span><br><span class="line">                        <span class="string">&quot;pinyin_filter&quot;</span></span><br><span class="line">                    ]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">&quot;tokenizer&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;my_ngram&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;type&quot;</span>: <span class="string">&quot;ngram&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;min_gram&quot;</span>: 2,</span><br><span class="line">                    <span class="string">&quot;max_gram&quot;</span>: 3,</span><br><span class="line">                    <span class="string">&quot;token_chars&quot;</span>: [</span><br><span class="line">                        <span class="string">&quot;letter&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;digit&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;punctuation&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;symbol&quot;</span></span><br><span class="line">                    ]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">&quot;filter&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;pinyin_filter&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;type&quot;</span>: <span class="string">&quot;pinyin&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;keep_full_pinyin&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">                    <span class="string">&quot;keep_joined_full_pinyin&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">                    <span class="string">&quot;keep_none_chinese_in_joined_full_pinyin&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">                    <span class="string">&quot;none_chinese_pinyin_tokenize&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">                    <span class="string">&quot;remove_duplicated_term&quot;</span>: <span class="literal">true</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h4 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">PUT /es_pinyin_highlight/_create/1</span><br><span class="line">&#123;<span class="string">&quot;text&quot;</span>:<span class="string">&quot;ES是世界上最好的搜索工具&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">POST /es_pinyin_highlight/_search</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;query&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;match&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;text.pinyin&quot;</span>: <span class="string">&quot;sousuo&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">   <span class="string">&quot;highlight&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;fields&quot;</span> : &#123;</span><br><span class="line">            <span class="string">&quot;text&quot;</span> : &#123;&#125;,</span><br><span class="line">            <span class="string">&quot;text.pinyin&quot;</span> : &#123;&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h5 id="搜索结果"><a href="#搜索结果" class="headerlink" title="搜索结果"></a>搜索结果</h5><p><img src="/images/es/es_pinyin_highlight_res.png" alt="img.png"></p>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><ol>
+<li>基于ngarm当做tokenizer，需要控制<code>min_gram</code>、<code>max_gram</code>参数的大小，防止token过多，造成索引膨胀，写入性能降低</li>
+</ol>
+<hr>
+<p>如果你有更好的方案，欢迎comment</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://github.com/medcl/elasticsearch-analysis-pinyin/issues/185">https://github.com/medcl/elasticsearch-analysis-pinyin/issues/185</a></p>
+]]></content>
+      <tags>
+        <tag>ES</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>XXL-JOB任务一直卡在进行中状态排查</title>
     <url>/2021/06/17/xxl-job-running-check/</url>
     <content><![CDATA[<p>&ensp;&ensp;最近发现 xxl-job（xxl-job是一个轻量级分布式任务调度平台） 的任务一直卡在进行中状态，期间 dump 过执行器的进程，发现线程已经没了，而且没有任何异常日志，网上查看原因，这是作者给的答案：</p>
@@ -444,25 +463,6 @@
       <tags>
         <tag>xxl-job</tag>
         <tag>经验</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>ES使用拼音搜索并且highlight搜索结果</title>
-    <url>/2022/01/01/es-pinyin-highlight/</url>
-    <content><![CDATA[<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><p>基于<a href="https://github.com/medcl/elasticsearch-analysis-pinyin">此pinyin分词器</a> 实现搜索,自定义analyzer,使用type ngarm当做tokenizer,使用type pinyin当做filter,并且设置<code>&quot;term_vector&quot;: &quot;with_positions_offsets&quot;</code></p>
-<span id="more"></span>
-<h3 id="🌰"><a href="#🌰" class="headerlink" title="🌰"></a>🌰</h3><h4 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">PUT es_pinyin_highlight</span><br><span class="line">&#123;</span><br><span class="line">    <span class="string">&quot;mappings&quot;</span> : &#123;</span><br><span class="line">      <span class="string">&quot;dynamic&quot;</span> : <span class="string">&quot;false&quot;</span>,</span><br><span class="line">      <span class="string">&quot;properties&quot;</span> : &#123;</span><br><span class="line">        <span class="string">&quot;text&quot;</span>: &#123;</span><br><span class="line">          <span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>,</span><br><span class="line">          <span class="string">&quot;fields&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;pinyin&quot;</span>:&#123;</span><br><span class="line">              <span class="string">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>,</span><br><span class="line">              <span class="string">&quot;analyzer&quot;</span>: <span class="string">&quot;pinyin_analyzer&quot;</span>,</span><br><span class="line">              <span class="string">&quot;search_analyzer&quot;</span>: <span class="string">&quot;standard&quot;</span>,</span><br><span class="line">              <span class="string">&quot;term_vector&quot;</span>: <span class="string">&quot;with_positions_offsets&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="string">&quot;settings&quot;</span> : &#123;</span><br><span class="line">      <span class="string">&quot;index&quot;</span> : &#123;</span><br><span class="line">        <span class="string">&quot;analysis&quot;</span>: &#123;</span><br><span class="line">            <span class="string">&quot;analyzer&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;pinyin_analyzer&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;tokenizer&quot;</span>: <span class="string">&quot;my_ngram&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;filter&quot;</span>: [</span><br><span class="line">                        <span class="string">&quot;pinyin_filter&quot;</span></span><br><span class="line">                    ]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">&quot;tokenizer&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;my_ngram&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;type&quot;</span>: <span class="string">&quot;ngram&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;min_gram&quot;</span>: 2,</span><br><span class="line">                    <span class="string">&quot;max_gram&quot;</span>: 3,</span><br><span class="line">                    <span class="string">&quot;token_chars&quot;</span>: [</span><br><span class="line">                        <span class="string">&quot;letter&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;digit&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;punctuation&quot;</span>,</span><br><span class="line">                        <span class="string">&quot;symbol&quot;</span></span><br><span class="line">                    ]</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="string">&quot;filter&quot;</span>: &#123;</span><br><span class="line">                <span class="string">&quot;pinyin_filter&quot;</span>: &#123;</span><br><span class="line">                    <span class="string">&quot;type&quot;</span>: <span class="string">&quot;pinyin&quot;</span>,</span><br><span class="line">                    <span class="string">&quot;keep_full_pinyin&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">                    <span class="string">&quot;keep_joined_full_pinyin&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">                    <span class="string">&quot;keep_none_chinese_in_joined_full_pinyin&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">                    <span class="string">&quot;none_chinese_pinyin_tokenize&quot;</span>: <span class="literal">false</span>,</span><br><span class="line">                    <span class="string">&quot;remove_duplicated_term&quot;</span>: <span class="literal">true</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">PUT /es_pinyin_highlight/_create/1</span><br><span class="line">&#123;<span class="string">&quot;text&quot;</span>:<span class="string">&quot;ES是世界上最好的搜索工具&quot;</span>&#125;</span><br><span class="line"></span><br><span class="line">POST /es_pinyin_highlight/_search</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;query&quot;</span>: &#123;</span><br><span class="line">    <span class="string">&quot;match&quot;</span>: &#123;</span><br><span class="line">      <span class="string">&quot;text.pinyin&quot;</span>: <span class="string">&quot;sousuo&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">   <span class="string">&quot;highlight&quot;</span>: &#123;</span><br><span class="line">        <span class="string">&quot;fields&quot;</span> : &#123;</span><br><span class="line">            <span class="string">&quot;text&quot;</span> : &#123;&#125;,</span><br><span class="line">            <span class="string">&quot;text.pinyin&quot;</span> : &#123;&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h5 id="搜索结果"><a href="#搜索结果" class="headerlink" title="搜索结果"></a>搜索结果</h5><p><img src="/images/es/es_pinyin_highlight_res.png" alt="img.png"></p>
-<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><ol>
-<li>基于ngarm当做tokenizer，需要控制<code>min_gram</code>、<code>max_gram</code>参数的大小，防止token过多，造成索引膨胀，写入性能降低</li>
-</ol>
-<hr>
-<p>如果你有更好的方案，欢迎comment</p>
-<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><p><a href="https://github.com/medcl/elasticsearch-analysis-pinyin/issues/185">https://github.com/medcl/elasticsearch-analysis-pinyin/issues/185</a></p>
-]]></content>
-      <tags>
-        <tag>ES</tag>
       </tags>
   </entry>
 </search>
