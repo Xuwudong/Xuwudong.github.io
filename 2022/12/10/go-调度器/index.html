@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/img.png">
+  <link rel="mask-icon" href="/images/img.svg" color="#222">
+  <meta name="google-site-verification" content="69bK5ZQVeGNmYYemcahCtIRNHf3zwEGBq1fT4SgEQVA">
+  <meta name="baidu-site-verification" content="code-wI49Lf6M4i">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/green/pace-theme-minimal.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.cn","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+<meta name="description" content="Go 语言的调度器通过使用与 CPU 数量相等的线程减少线程频繁切换的内存开销，同时在每一个线程上执行额外开销更低的 Goroutine 来降低操作系统和硬件的负载">
+<meta property="og:type" content="article">
+<meta property="og:title" content="go调度器详解">
+<meta property="og:url" content="https://www.9932xt.cn/2022/12/10/go-%E8%B0%83%E5%BA%A6%E5%99%A8/index.html">
+<meta property="og:site_name" content="TecHub">
+<meta property="og:description" content="Go 语言的调度器通过使用与 CPU 数量相等的线程减少线程频繁切换的内存开销，同时在每一个线程上执行额外开销更低的 Goroutine 来降低操作系统和硬件的负载">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.9932xt.cn/images/go_schedule/img.png">
+<meta property="og:image" content="https://www.9932xt.cn/images/go_schedule/img_1.png">
+<meta property="article:published_time" content="2022-12-10T08:32:55.000Z">
+<meta property="article:modified_time" content="2023-01-11T14:34:54.540Z">
+<meta property="article:author" content="Xuwudong">
+<meta property="article:tag" content="调度器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.9932xt.cn/images/go_schedule/img.png">
+
+
+<link rel="canonical" href="https://www.9932xt.cn/2022/12/10/go-%E8%B0%83%E5%BA%A6%E5%99%A8/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.cn/2022/12/10/go-%E8%B0%83%E5%BA%A6%E5%99%A8/","path":"2022/12/10/go-调度器/","title":"go调度器详解"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>go调度器详解 | TecHub</title>
+  
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"G-GCKHLYND9T","only_pageview":true}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">TecHub</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">设计原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A1%E7%AA%83%E5%8F%96%E8%B0%83%E5%BA%A6%E5%99%A8"><span class="nav-number">1.1.</span> <span class="nav-text">任务窃取调度器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="nav-number">1.2.</span> <span class="nav-text">抢占式调度</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E5%8D%8F%E4%BD%9C%E7%9A%84%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="nav-number">1.2.1.</span> <span class="nav-text">基于协作的抢占式调度</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9F%BA%E4%BA%8E%E4%BF%A1%E5%8F%B7%E7%9A%84%E6%8A%A2%E5%8D%A0%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="nav-number">1.2.2.</span> <span class="nav-text">基于信号的抢占式调度</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">数据结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%9B%E5%BB%BAgoroutine"><span class="nav-number">3.</span> <span class="nav-text">创建goroutine</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E7%BB%93%E6%9E%84%E4%BD%93"><span class="nav-number">3.1.</span> <span class="nav-text">初始化结构体</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%90%E8%A1%8C%E9%98%9F%E5%88%97"><span class="nav-number">3.2.</span> <span class="nav-text">运行队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B0%83%E5%BA%A6%E4%BF%A1%E6%81%AF"><span class="nav-number">3.3.</span> <span class="nav-text">调度信息</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BE%AA%E7%8E%AF%E8%B0%83%E5%BA%A6"><span class="nav-number">4.</span> <span class="nav-text">循环调度</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A6%E5%8F%91%E8%B0%83%E5%BA%A6"><span class="nav-number">5.</span> <span class="nav-text">触发调度</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BB%E5%8A%A8%E6%8C%82%E8%B5%B7"><span class="nav-number">5.1.</span> <span class="nav-text">主动挂起</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="nav-number">5.2.</span> <span class="nav-text">系统调用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E4%BD%9C%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="nav-number">5.3.</span> <span class="nav-text">协作式调度</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">6.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xuwudong"
+      src="/images/techub.jpg">
+  <p class="site-author-name" itemprop="name">Xuwudong</p>
+  <div class="site-description" itemprop="description">一点技术与经验分享</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Xuwudong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Xuwudong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1819228504@qq.com" title="E-Mail → mailto:1819228504@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+    <div id="music163player">
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=32574252&auto=1&height=66"></iframe>
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=346576&auto=1&height=66"></iframe>
+     </div>
+  </aside>
+
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.9932xt.cn/2022/12/10/go-%E8%B0%83%E5%BA%A6%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/techub.jpg">
+      <meta itemprop="name" content="Xuwudong">
+      <meta itemprop="description" content="一点技术与经验分享">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TecHub">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          go调度器详解
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-12-10 16:32:55" itemprop="dateCreated datePublished" datetime="2022-12-10T16:32:55+08:00">2022-12-10</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2023-01-11 22:34:54" itemprop="dateModified" datetime="2023-01-11T22:34:54+08:00">2023-01-11</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/go/" itemprop="url" rel="index"><span itemprop="name">go</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>Go 语言的调度器通过使用<strong>与 CPU 数量相等的线程减少线程频繁切换的内存开销</strong>，同时在每一个线程上执行额外开销更低的 Goroutine 来<strong>降低操作系统和硬件的负载</strong></p>
+</blockquote>
+<span id="more"></span>
+<h2 id="设计原理"><a href="#设计原理" class="headerlink" title="设计原理"></a>设计原理</h2><h3 id="任务窃取调度器"><a href="#任务窃取调度器" class="headerlink" title="任务窃取调度器"></a>任务窃取调度器</h3><ol>
+<li>在当前的 G-M 模型中引入了处理器 P，增加中间层；</li>
+<li>在处理器 P 的基础上实现基于工作窃取的调度器</li>
+</ol>
+<p>基于工作窃取的多线程调度器将每一个线程绑定到了独立的 CPU 上，这些线程会被不同处理器管理，不同的处理器通过工作窃取对任务进行再分配实现任务的平衡，</p>
+<h3 id="抢占式调度"><a href="#抢占式调度" class="headerlink" title="抢占式调度"></a>抢占式调度</h3><h4 id="基于协作的抢占式调度"><a href="#基于协作的抢占式调度" class="headerlink" title="基于协作的抢占式调度"></a>基于协作的抢占式调度</h4><ol>
+<li>编译器会在<strong>调用函数前插入</strong> runtime.morestack；</li>
+<li>Go 语言运行时会<strong>在垃圾回收暂停程序、系统监控发现 Goroutine 运行超过 10ms 时发出抢占请求 StackPreempt</strong>；</li>
+<li>当发生函数调用时，可能会执行编译器插入的 runtime.morestack，它调用的 runtime.newstack 会检查 Goroutine 的 stackguard0 字段是否为 StackPreempt；</li>
+<li>如果 stackguard0 是 StackPreempt，就会<strong>触发抢占让出当前线程</strong>；</li>
+</ol>
+<ul>
+<li>一个 Go 语言程序能够创建的最大线程数，虽然最多可以创建 10000 个线程，但是可以同时运行的线程还是由 GOMAXPROCS 变量控制。<h4 id="基于信号的抢占式调度"><a href="#基于信号的抢占式调度" class="headerlink" title="基于信号的抢占式调度"></a>基于<strong>信号</strong>的抢占式调度</h4></li>
+</ul>
+<ol>
+<li>目前的抢占式调度也只会在垃圾回收扫描任务时触发</li>
+<li>基于信号的抢占式调度只解决了垃圾回收和栈扫描时存在的问题，它到目前为止没有解决所有问题</li>
+</ol>
+<h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><ol>
+<li>G — 表示 Goroutine，它是一个待执行的任务；</li>
+<li>M — <strong>表示操作系统的线程</strong>，它由操作系统的调度器调度和管理；<br> 1.Go 语言并发模型中的 M 是操作系统线程。调度器最多可以创建 10000 个线程，但是其中大多数的线程都不会执行用户代码（可能陷入系统调用），<strong>最多只会有 GOMAXPROCS 个活跃线程能够正常运行</strong></li>
+<li>P — <strong>表示处理器</strong>，它可以被看做运行在线程上的本地调度器； <ol>
+<li>调度器中的处理器 P 是线程和 Goroutine 的中间层，它能提供线程需要的上下文环境，也会负责调度线程上的等待队列，通过处理器 P 的调度，每一个内核线程都能够执行多个 Goroutine，它能在 Goroutine 进行一些 I/O 操作时及时让出计算资源，提高线程的利用率。 </li>
+<li>因为调度器在启动时就会创建 GOMAXPROCS 个处理器，所以 Go 语言程序的处理器数量一定会等于 GOMAXPROCS，这些处理器会绑定到不同的内核线程上。</li>
+</ol>
+</li>
+</ol>
+<h2 id="创建goroutine"><a href="#创建goroutine" class="headerlink" title="创建goroutine"></a>创建goroutine</h2><h3 id="初始化结构体"><a href="#初始化结构体" class="headerlink" title="初始化结构体"></a>初始化结构体</h3><ul>
+<li>会从处理器或者调度器的缓存中获取新的结构体，取不到调用 runtime.malg 函数创建。<h3 id="运行队列"><a href="#运行队列" class="headerlink" title="运行队列"></a>运行队列</h3>这既可能是全局的运行队列，也可能是处理器本地的运行队列：</li>
+</ul>
+<ol>
+<li>当 next 为 true 时，将 Goroutine 设置到处理器的 runnext 作为下一个处理器执行的任务；</li>
+<li>当 next 为 false 并且本地运行队列还有剩余空间时，将 Goroutine 加入处理器持有的本地运行队列；</li>
+<li>当处理器的本地运行队列已经没有剩余空间时就会把本地队列中的一部分 Goroutine 和待加入的 Goroutine 通过 runtime.runqputslow 添加到调度器持有的全局运行队列上；</li>
+</ol>
+<ul>
+<li>简单总结一下，<strong>Go 语言有两个运行队列，其中一个是处理器本地的运行队列，另一个是调度器持有的全局运行队列，只有在本地运行队列没有剩余空间时才会使用全局队列</strong>。<h3 id="调度信息"><a href="#调度信息" class="headerlink" title="调度信息"></a>调度信息</h3></li>
+</ul>
+<h2 id="循环调度"><a href="#循环调度" class="headerlink" title="循环调度"></a>循环调度</h2><p><img src="/images/go_schedule/img.png" alt="img.png"></p>
+<ul>
+<li>我们可以认为调度循环永远都不会返回。</li>
+<li>Go 语言中的运行时调度循环属于P维度，一个P运行一个M,对应一个schedule,会从 runtime.schedule 开始，最终又回到 runtime.schedule</li>
+</ul>
+<ul>
+<li><p>runtime.schedule 函数会从下面几个地方查找待执行的 Goroutine：</p>
+<ol>
+<li>为了保证公平，当全局运行队列中有待执行的 Goroutine 时，通过 schedtick 保证有一定几率会从全局的运行队列中查找对应的 Goroutine；</li>
+<li>从处理器本地的运行队列中查找待执行的 Goroutine；</li>
+<li>如果前两种方法都没有找到 Goroutine，会通过 runtime.findrunnable 进行阻塞地查找 Goroutine； <ul>
+<li>runtime.findrunnable 的实现非常复杂，这个 300 多行的函数通过以下的过程获取可运行的 Goroutine：<ol>
+<li>从本地运行队列、全局运行队列中查找；</li>
+<li>从网络轮询器中查找是否有 Goroutine 等待运行；</li>
+<li>通过 runtime.runqsteal 尝试从其他随机的处理器中窃取待运行的 Goroutine，该函数还可能窃取处理器的计时器；</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="触发调度"><a href="#触发调度" class="headerlink" title="触发调度"></a>触发调度</h2><p><img src="/images/go_schedule/img_1.png" alt="img_1.png"></p>
+<p>除了上图中可能触发调度的时间点，运行时还会在线程启动 runtime.mstart 和 Goroutine 执行结束 runtime.goexit0 触发调度。我们在这里会重点介绍运行时触发调度的几个路径：</p>
+<ul>
+<li>主动挂起 — runtime.gopark -&gt; runtime.park_m</li>
+<li>系统调用 — runtime.exitsyscall -&gt; runtime.exitsyscall0</li>
+<li>协作式调度 — runtime.Gosched -&gt; runtime.gosched_m -&gt; runtime.goschedImpl</li>
+<li>系统监控 — runtime.sysmon -&gt; runtime.retake -&gt; runtime.preemptone<br>我们在这里介绍的调度时间点不是将线程的运行权直接交给其他任务，而是通过调度器的 runtime.schedule 重新调度。<h3 id="主动挂起"><a href="#主动挂起" class="headerlink" title="主动挂起"></a>主动挂起</h3></li>
+</ul>
+<ol>
+<li>runtime.park_m 会将当前 Goroutine 的状态从 _Grunning 切换至 _Gwaiting，调用 runtime.dropg 移除线程和 Goroutine 之间的关联，<br>在这之后就可以调用 runtime.schedule 触发新一轮的调度了。</li>
+<li>runtime.ready 会将准备就绪的 Goroutine 的状态切换至 _Grunnable 并将其加入处理器的运行队列中，等待调度器的调度。</li>
+</ol>
+<h3 id="系统调用"><a href="#系统调用" class="headerlink" title="系统调用"></a>系统调用</h3><p>需要注意的是 runtime.reentersyscall 会使处理器和线程的分离，当前线程会陷入系统调用等待返回，<strong>在锁被释放后，会有其他 Goroutine 抢占处理器资源</strong>。</p>
+<h3 id="协作式调度"><a href="#协作式调度" class="headerlink" title="协作式调度"></a>协作式调度</h3><p>主动让出处理器，允许其他 Goroutine 运行。该函数无法挂起 Goroutine，调度器可能会将当前 Goroutine 调度到其他线程上<br>运行时会更新 Goroutine 的状态到 _Grunnable，让出当前的处理器并将 Goroutine 重新放回全局队列，在最后，该函数会调用 runtime.schedule 触发调度。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://draveness.me/golang/docs/part3-runtime/ch06-concurrency/golang-goroutine/#%E5%8D%8F%E4%BD%9C%E5%BC%8F%E8%B0%83%E5%BA%A6">go语言设计与实现-调度器</a></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="post-tags">
+              <a href="/tags/%E8%B0%83%E5%BA%A6%E5%99%A8/" rel="tag"><i class="fa fa-tag"></i> 调度器</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/12/09/go-memory-allocator/" rel="prev" title="go 内存分配器">
+                  <i class="fa fa-chevron-left"></i> go 内存分配器
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/12/30/go-stack-management/" rel="next" title="go栈内存管理">
+                  go栈内存管理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuwudong</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">88k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:20</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div> -->
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Weibo,Wechat,Douban,QQZone,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Xuwudong","repo":"gitalk_repo","client_id":"f258dfc8962a1ec9a80a","client_secret":"6d1c6eec044fe7e76923669aa5827769f0e6c2da","admin_user":"Xuwudong","distraction_free_mode":false,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"3f3ecfb981c428422ae907979f82ad27"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

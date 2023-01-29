@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/img.png">
+  <link rel="mask-icon" href="/images/img.svg" color="#222">
+  <meta name="google-site-verification" content="69bK5ZQVeGNmYYemcahCtIRNHf3zwEGBq1fT4SgEQVA">
+  <meta name="baidu-site-verification" content="code-wI49Lf6M4i">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/green/pace-theme-minimal.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.cn","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+<meta name="description" content="&amp;ensp;&amp;ensp;今天分享一下最近学习回溯算法的一些经验与心得！根据百度百科的解释：回溯算法实际上一个类似枚举的搜索尝试过程，主要是在搜索尝试过程中寻找问题的解，当发现已不满足求解条件时，就“回溯”返回，尝试别的路径。回溯法是一种选优搜素法，按选优条件向前搜索，以达到目标。但当探索到某一步时，发现原先选择并不优或达不到目标，就退回一步重新选择，这种走不通就退回再走的技术为回溯法，而满足回溯条">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法的奥秘-回溯（2）">
+<meta property="og:url" content="https://www.9932xt.cn/2021/06/17/backtracing-2/index.html">
+<meta property="og:site_name" content="TecHub">
+<meta property="og:description" content="&amp;ensp;&amp;ensp;今天分享一下最近学习回溯算法的一些经验与心得！根据百度百科的解释：回溯算法实际上一个类似枚举的搜索尝试过程，主要是在搜索尝试过程中寻找问题的解，当发现已不满足求解条件时，就“回溯”返回，尝试别的路径。回溯法是一种选优搜素法，按选优条件向前搜索，以达到目标。但当探索到某一步时，发现原先选择并不优或达不到目标，就退回一步重新选择，这种走不通就退回再走的技术为回溯法，而满足回溯条">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-17T12:02:30.000Z">
+<meta property="article:modified_time" content="2023-01-11T14:34:54.534Z">
+<meta property="article:author" content="Xuwudong">
+<meta property="article:tag" content="回溯">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://www.9932xt.cn/2021/06/17/backtracing-2/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.cn/2021/06/17/backtracing-2/","path":"2021/06/17/backtracing-2/","title":"算法的奥秘-回溯（2）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>算法的奥秘-回溯（2） | TecHub</title>
+  
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"G-GCKHLYND9T","only_pageview":true}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">TecHub</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xuwudong"
+      src="/images/techub.jpg">
+  <p class="site-author-name" itemprop="name">Xuwudong</p>
+  <div class="site-description" itemprop="description">一点技术与经验分享</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Xuwudong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Xuwudong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1819228504@qq.com" title="E-Mail → mailto:1819228504@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+    <div id="music163player">
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=32574252&auto=1&height=66"></iframe>
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=346576&auto=1&height=66"></iframe>
+     </div>
+  </aside>
+
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.9932xt.cn/2021/06/17/backtracing-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/techub.jpg">
+      <meta itemprop="name" content="Xuwudong">
+      <meta itemprop="description" content="一点技术与经验分享">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TecHub">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          算法的奥秘-回溯（2）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-06-17 20:02:30" itemprop="dateCreated datePublished" datetime="2021-06-17T20:02:30+08:00">2021-06-17</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2023-01-11 22:34:54" itemprop="dateModified" datetime="2023-01-11T22:34:54+08:00">2023-01-11</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>&ensp;&ensp;今天分享一下最近学习回溯算法的一些经验与心得！根据百度百科的解释：回溯算法实际上一个类似枚举的搜索尝试过程，主要是在搜索尝试过程中寻找问题的解，当发现已不满足求解条件时，就“回溯”返回，尝试别的路径。回溯法是一种选优搜素法，按选优条件向前搜索，以达到目标。但当探索到某一步时，发现原先选择并不优或达不到目标，就退回一步重新选择，这种走不通就退回再走的技术为回溯法，而满足回溯条件的某个状态的点称为“回溯点”。许多复杂的，规模较大的问题都可以使用回溯法，有“通用解题方法”的美称。直接看题，毁灭吧，赶紧的！</p>
+<p>&ensp;&ensp;我们知道二叉树的前序遍历dfs的代码是这样写的：</p>
+<span id="more"></span>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public void treeDFS(TreeNode root) &#123;</span><br><span class="line">    <span class="keyword">if</span> (root == null)</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    System.out.println(root.val);</span><br><span class="line">    treeDFS(root.left);</span><br><span class="line">    treeDFS(root.right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;这里可以通过仿照一下二叉树，写一下9叉树前序遍历的代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public void treeDFS(TreeNode node) &#123;</span><br><span class="line">    // 递归终止条件</span><br><span class="line">    <span class="keyword">if</span>(node == null) &#123;</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.println(node.val);</span><br><span class="line">    <span class="keyword">for</span>(int i = 0;i &lt; 9;i++) &#123;</span><br><span class="line">        // 一些操作，可有可无，视情况而定</span><br><span class="line">        treeDfs(<span class="string">&quot;第i个节点&quot;</span>);</span><br><span class="line">        // 回退操作，可有可无，视情况而定</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;这就是回溯算法的基本框架，几乎所有回溯算法都离不开这个框架，接下来我们看几个实例。</p>
+<p>1、全排列</p>
+<p>给定一个 没有重复 数字的序列，返回其所有可能的全排列。</p>
+<p>示例:</p>
+<p>输入: [1,2,3]</p>
+<p>输出:</p>
+<p>[<br>  [1,2,3],</p>
+<p>  [1,3,2],</p>
+<p>  [2,1,3],</p>
+<p>  [2,3,1],</p>
+<p>  [3,1,2],</p>
+<p>  [3,2,1]</p>
+<p>]<br>这其实是一颗三叉树，根据上面的框架，写出代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; permute(int[] nums) &#123;</span><br><span class="line">        List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">        Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">        int n = nums.length;</span><br><span class="line">        boolean[] used = new boolean[n];</span><br><span class="line">        dfs(res, deque, n, 0, used, nums);</span><br><span class="line">        <span class="built_in">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * dfs</span><br><span class="line">     * @param res res </span><br><span class="line">     * @param deque deque</span><br><span class="line">     * @param n  n</span><br><span class="line">     * @param first 层数</span><br><span class="line">     * @param used 是否有使用到数组标记</span><br><span class="line">     * @param nums nums</span><br><span class="line">     */</span><br><span class="line">    private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int n, int first, boolean[] used, int[] nums) &#123;</span><br><span class="line">        <span class="keyword">if</span> (first == n) &#123;</span><br><span class="line">            res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">            <span class="built_in">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        // 注意i= 0</span><br><span class="line">        <span class="keyword">for</span> (int i = 0; i &lt; n; i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (!used[i]) &#123;</span><br><span class="line">                deque.addLast(nums[i]);</span><br><span class="line">                used[i] = <span class="literal">true</span>;</span><br><span class="line">                // 这里是first +1 ,first代表层数</span><br><span class="line">                dfs(res, deque, n, first + 1, used, nums);</span><br><span class="line">                deque.removeLast();</span><br><span class="line">                used[i] = <span class="literal">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>for 循环 i 值是从0开始的，这样才能出现【3,2，1】这样的集合。</li>
+<li>dfs 递归传的是first + 1，而不是i+1,因为first这里表示的是遍历层数，而i表示的是遍历数组的索引。也可以去掉first参数。直接将deque.size() == n 作为递归终止条件。</li>
+</ul>
+<p>2、全排列 || </p>
+<p>给定一个可包含重复数字的序列 nums ，按任意顺序 返回所有不重复的全排列。</p>
+<p>示例 1：</p>
+<p>输入：nums = [1,1,2]</p>
+<p>输出：</p>
+<p>[[1,1,2],</p>
+<p> [1,2,1],</p>
+<p> [2,1,1]]</p>
+<p>示例 2：</p>
+<p>输入：nums = [1,2,3]</p>
+<p>输出：[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]</p>
+<p>直接看代码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; permuteUnique(int[] nums) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; list = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    boolean[] used = new boolean[nums.length];</span><br><span class="line">    // 有重复的队列，先排序</span><br><span class="line">    Arrays.sort(nums);</span><br><span class="line">    dfs(list, deque, nums, 0, used);</span><br><span class="line">    <span class="built_in">return</span> list;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; list, Deque&lt;Integer&gt; deque, int[] nums, int first, boolean[] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (first == nums.length) &#123;</span><br><span class="line">        list.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; nums.length; i++) &#123;</span><br><span class="line">        // 去重</span><br><span class="line">        <span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; nums[i] == nums[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        used[i] = <span class="literal">true</span>;</span><br><span class="line">        dfs(list, deque, nums, first + 1, used);</span><br><span class="line">        used[i] = <span class="literal">false</span>;</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里需要去重，最简单的做法就是先将nums排序，这样相同的元素就在一起了，然后在第一题的基础上加上这句就行了</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; nums[i] == nums[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">    <span class="built_in">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3、子集</p>
+<p>给你一个整数数组 nums ，数组中的元素 互不相同 。返回该数组所有可能的子集（幂集）。<br>解集 不能 包含重复的子集。你可以按 任意顺序 返回解集。</p>
+<p>示例 1：</p>
+<p>输入：nums = [1,2,3]</p>
+<p>输出：[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</p>
+<p>示例 2：</p>
+<p>输入：nums = [0]</p>
+<p>输出：[[],[0]]</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; subsets(int[] nums) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, nums, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int[] nums, int index) &#123;</span><br><span class="line">    res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; nums.length; i++) &#123;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        dfs(res, deque, nums, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点:</p>
+<ul>
+<li>for 循环 i的初始值应该是index,如果i = 0的话，nums[i]就重复了</li>
+<li>dfs递归时传的index= i+ 1，而不是index+ 1，如果传的是index + 1,那么for循环那么多次递归进去的值都是一样的。</li>
+</ul>
+<p>4、子集||</p>
+<p>给定一个可能包含重复元素的整数数组 nums，返回该数组所有可能的子集（幂集）。</p>
+<p>说明：解集不能包含重复的子集。</p>
+<p>示例:</p>
+<p>输入: [1,2,2]</p>
+<p>输出:</p>
+<p>[</p>
+<p>  [2],</p>
+<p>  [1],</p>
+<p>  [1,2,2],</p>
+<p>  [2,2],</p>
+<p>  [1,2],</p>
+<p>  []</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">public List&lt;List&lt;Integer&gt;&gt; subsetsWithDup(int[] nums) &#123;</span><br><span class="line">    Arrays.sort(nums);</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, nums, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int[] nums, int index) &#123;</span><br><span class="line">    res.add(new ArrayList&lt;Integer&gt;(deque));</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; nums.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; nums[i] == nums[i - 1]) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        deque.addLast(nums[i]);</span><br><span class="line">        dfs(res, deque, nums, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里跟第二题求全排列一样的思路，要去重就先排序，将重复的元素放在一起，然后通过这行代码过滤掉：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (i &gt; index &amp;&amp; nums[i] == nums[i - 1]) &#123;</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>5、组合求和</p>
+<p>给定一个无重复元素的数组 candidates 和一个目标数 target ，找出 candidates 中所有可以使数字和为 target 的组合。</p>
+<p>candidates 中的数字可以无限制重复被选取。</p>
+<p>说明：</p>
+<p>所有数字（包括 target）都是正整数。</p>
+<p>解集不能包含重复的组合。 </p>
+<p>示例 1：</p>
+<p>输入：candidates = [2,3,6,7], target = 7,</p>
+<p>所求解集为：</p>
+<p>[</p>
+<p>  [7],</p>
+<p>  [2,2,3]</p>
+<p>]</p>
+<p>示例 2：</p>
+<p>输入：candidates = [2,3,5], target = 8,</p>
+<p>所求解集为：</p>
+<p>[</p>
+<p>  [2,2,2,2],</p>
+<p>  [2,3,3],</p>
+<p>  [3,5]</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public List&lt;List&lt;Integer&gt;&gt; combinationSum(int[] candidates, int target) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    dfs(res, new ArrayList&lt;&gt;(), 0, candidates, target);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, List&lt;Integer&gt; list, int index, int[] arr, int left) &#123;</span><br><span class="line">    <span class="keyword">if</span> (left == 0) &#123;</span><br><span class="line">        res.add(new ArrayList&lt;&gt;(list));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; arr.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (arr[i] &lt;= left) &#123;</span><br><span class="line">            list.add(arr[i]);</span><br><span class="line">            // 注意这里递归的index取 i,而不是index，取index的话会遍历回去</span><br><span class="line">            dfs(res, list, i, arr, left - arr[i]);</span><br><span class="line">            list.remove(list.size() - 1);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意点：</p>
+<ul>
+<li><p>这里的递归终止条件是left == 0</p>
+</li>
+<li><p>dfs递归时的index应该取值i,这样才会遍历到同一个元素。</p>
+</li>
+</ul>
+<p>6、组合</p>
+<p>给定两个整数 n 和 k，返回 1 … n 中所有可能的 k 个数的组合。</p>
+<p>示例:</p>
+<p>输入: n = 4, k = 2</p>
+<p>输出:</p>
+<p>[</p>
+<p>  [2,4],</p>
+<p>  [3,4],</p>
+<p>  [2,3],</p>
+<p>  [1,2],</p>
+<p>  [1,3],</p>
+<p>  [1,4],</p>
+<p>]</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"> public List&lt;List&lt;Integer&gt;&gt; combine(int n, int k) &#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; res = new ArrayList&lt;&gt;();</span><br><span class="line">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span><br><span class="line">    dfs(res, deque, n, k, 0);</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(List&lt;List&lt;Integer&gt;&gt; res, Deque&lt;Integer&gt; deque, int n, int k, int index) &#123;</span><br><span class="line">    <span class="keyword">if</span> (deque.size() == k) &#123;</span><br><span class="line">        res.add(new ArrayList&lt;&gt;(deque));</span><br><span class="line">        <span class="built_in">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        deque.addLast(i + 1);</span><br><span class="line">        dfs(res, deque, n, k, i + 1);</span><br><span class="line">        deque.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里需要注意递归终止条件是deque.size() == k</li>
+</ul>
+<p>通过上面的分析，我们发现其实递归算法都离不开那个框架，只不过需要根据具体的题目改变一些递归终止条件，递归前要做的事，递归的传值。接下来看一题综合的，起码用到了上面的三道题的套路。</p>
+<p>7、活字印刷</p>
+<p>你有一套活字字模 tiles，其中每个字模上都刻有一个字母 tiles[i]。返回你可以印出的非空字母序列的数目。</p>
+<p>注意：本题中，每个活字字模只能使用一次。</p>
+<p>示例 1：</p>
+<p>输入：”AAB”</p>
+<p>输出：8</p>
+<p>解释：可能的序列为 “A”, “B”, “AA”, “AB”, “BA”, “AAB”, “ABA”, “BAA”。</p>
+<p>示例 2：</p>
+<p>输入：”AAABBC”</p>
+<p>输出：188</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">private int count = 0;</span><br><span class="line"></span><br><span class="line">public int numTilePossibilities(String tiles) &#123;</span><br><span class="line">    char[] arr = tiles.toCharArray();</span><br><span class="line">    Arrays.sort(arr);</span><br><span class="line">    boolean[] used = new boolean[arr.length];</span><br><span class="line">    dfs(arr, used, 0);</span><br><span class="line">    <span class="built_in">return</span> count;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private void dfs(char[] arr, boolean[] used, int index) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index != 0) &#123;</span><br><span class="line">        count++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; arr.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (used[i] || (i &gt; 0 &amp;&amp; arr[i] == arr[i - 1] &amp;&amp; !used[i - 1])) &#123;</span><br><span class="line">            <span class="built_in">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        used[i] = <span class="literal">true</span>;</span><br><span class="line">        dfs(arr, used, index + 1);</span><br><span class="line">        used[i] = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li><p>这题其实就是求不重复的，能反过来的（相当于全排列）子集，所以我们用到了三个套路：</p>
+</li>
+<li><p>全排列：used标记数组，并且i 从0开始遍历。</p>
+</li>
+<li><p>不重复：先排序，再相邻元素相同并且上一个元素已经遍历过的剪枝判断</p>
+</li>
+<li><p>子集：只要index &gt; 0 ,每dfs一次，子集的个数就加1，另外子集其实不需要显示写终止条件的。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+          <div class="post-tags">
+              <a href="/tags/%E5%9B%9E%E6%BA%AF/" rel="tag"><i class="fa fa-tag"></i> 回溯</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/17/backtracing-1/" rel="prev" title="算法的奥秘-回溯（1）">
+                  <i class="fa fa-chevron-left"></i> 算法的奥秘-回溯（1）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/06/17/backtracing-3/" rel="next" title="算法的奥秘-回溯（3）">
+                  算法的奥秘-回溯（3） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuwudong</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">88k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:20</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div> -->
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Weibo,Wechat,Douban,QQZone,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Xuwudong","repo":"gitalk_repo","client_id":"f258dfc8962a1ec9a80a","client_secret":"6d1c6eec044fe7e76923669aa5827769f0e6c2da","admin_user":"Xuwudong","distraction_free_mode":false,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"cb617671417ea3e33063459e8ee051e5"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

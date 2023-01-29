@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.2">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/img.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/img.png">
+  <link rel="mask-icon" href="/images/img.svg" color="#222">
+  <meta name="google-site-verification" content="69bK5ZQVeGNmYYemcahCtIRNHf3zwEGBq1fT4SgEQVA">
+  <meta name="baidu-site-verification" content="code-wI49Lf6M4i">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/green/pace-theme-minimal.css">
+  <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.cn","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+<meta name="description" content="短链接 完整版   短链接长度理论上只用7个字符即可映射到所有网页数，将64位整数装换成字符串即可 为了区分生成短链接的来源，用户等，采取一对多映射 hash生成64位整数存在冲突，没办法。使用分布式ID生成器生成短链接地址 以短链接作为key,长链接作为value存储 为了统计短标题被点击的次数，使用302临时重定向 预防攻击， 使用Redis反向存储（长链接：短链接）。一个转换请求打过来，Re">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统设计">
+<meta property="og:url" content="https://www.9932xt.cn/2022/11/20/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/index.html">
+<meta property="og:site_name" content="TecHub">
+<meta property="og:description" content="短链接 完整版   短链接长度理论上只用7个字符即可映射到所有网页数，将64位整数装换成字符串即可 为了区分生成短链接的来源，用户等，采取一对多映射 hash生成64位整数存在冲突，没办法。使用分布式ID生成器生成短链接地址 以短链接作为key,长链接作为value存储 为了统计短标题被点击的次数，使用302临时重定向 预防攻击， 使用Redis反向存储（长链接：短链接）。一个转换请求打过来，Re">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-11-20T05:06:01.000Z">
+<meta property="article:modified_time" content="2023-01-11T14:34:54.538Z">
+<meta property="article:author" content="Xuwudong">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://www.9932xt.cn/2022/11/20/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.cn/2022/11/20/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/","path":"2022/11/20/系统设计/","title":"系统设计"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>系统设计 | TecHub</title>
+  
+  <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"G-GCKHLYND9T","only_pageview":true}</script>
+  <script src="/js/third-party/analytics/google-analytics.js"></script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.css"><style>
+#needsharebutton-postbottom {
+  cursor: pointer;
+  height: 26px;
+  margin-top: 10px;
+  position: relative;
+}
+#needsharebutton-postbottom .btn {
+  border: 1px solid $btn-default-border-color;
+  border-radius: 3px;
+  display: initial;
+  padding: 1px 4px;
+}
+</style>
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">TecHub</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9F%AD%E9%93%BE%E6%8E%A5"><span class="nav-number">1.</span> <span class="nav-text">短链接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E6%97%B6%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6%E5%99%A8"><span class="nav-number">2.</span> <span class="nav-text">定时任务调度器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#api%E9%99%90%E9%80%9F"><span class="nav-number">3.</span> <span class="nav-text">api限速</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BB%A4%E7%89%8C%E6%A1%B6"><span class="nav-number">3.1.</span> <span class="nav-text">令牌桶</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Xuwudong"
+      src="/images/techub.jpg">
+  <p class="site-author-name" itemprop="name">Xuwudong</p>
+  <div class="site-description" itemprop="description">一点技术与经验分享</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">32</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Xuwudong" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Xuwudong" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:1819228504@qq.com" title="E-Mail → mailto:1819228504@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+        </div>
+      </div>
+        <div class="back-to-top animated" role="button" aria-label="返回顶部">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+    </div>
+    <div id="music163player">
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=32574252&auto=1&height=66"></iframe>
+          <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=346576&auto=1&height=66"></iframe>
+     </div>
+  </aside>
+
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.9932xt.cn/2022/11/20/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/techub.jpg">
+      <meta itemprop="name" content="Xuwudong">
+      <meta itemprop="description" content="一点技术与经验分享">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="TecHub">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          系统设计
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2022-11-20 13:06:01" itemprop="dateCreated datePublished" datetime="2022-11-20T13:06:01+08:00">2022-11-20</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2023-01-11 22:34:54" itemprop="dateModified" datetime="2023-01-11T22:34:54+08:00">2023-01-11</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1/" itemprop="url" rel="index"><span itemprop="name">系统设计</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h3 id="短链接"><a href="#短链接" class="headerlink" title="短链接"></a>短链接</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://soulmachine.gitbooks.io/system-design/content/cn/tinyurl.html">完整版</a></p>
+</blockquote>
+<ul>
+<li>短链接长度理论上只用7个字符即可映射到所有网页数，将64位整数装换成字符串即可</li>
+<li>为了区分生成短链接的来源，用户等，采取一对多映射</li>
+<li>hash生成64位整数存在冲突，没办法。使用分布式ID生成器生成短链接地址</li>
+<li>以短链接作为key,长链接作为value存储</li>
+<li>为了统计短标题被点击的次数，使用302临时重定向</li>
+<li>预防攻击， 使用Redis反向存储（长链接：短链接）。一个转换请求打过来，Redis有缓存就直接返回短链接，避免ID被耗尽。<span id="more"></span>
+<h3 id="定时任务调度器"><a href="#定时任务调度器" class="headerlink" title="定时任务调度器"></a>定时任务调度器</h3><blockquote>
+<p><a target="_blank" rel="noopener" href="https://soulmachine.gitbooks.io/system-design/content/cn/task-scheduler.html">完整版</a></p>
+</blockquote>
+</li>
+<li>基于DelayQueue实现，基于堆，复杂度logN<ul>
+<li>take（） while(true) 循环，leader只休眠堆顶元素执行时间与当前时间的差值，其他线程无限期休眠。</li>
+<li>put()  offer之后，peek一下如果是放进去的元素，说明当前定时任务应该最先执行，将leader置位null，唤醒（信号量notify）一个线程，让其去拿最新的定时任务。</li>
+</ul>
+</li>
+<li>ScheduledExecutorService，JDK 的 ScheduledExecutorService 本质上仍然是一个 DelayQueue，但是任务是通过多线程的方式进行。</li>
+<li>时间轮 TODO<a target="_blank" rel="noopener" href="https://github.com/netty/netty/blob/4.1/common/src/main/java/io/netty/util/HashedWheelTimer.java">开源实现</a><br><a target="_blank" rel="noopener" href="https://xie.infoq.cn/article/9146da561960e2cb0a5eb14b2">时间片详解</a><ul>
+<li>添加任务o(1),高性能，吞吐高，只有一个线程轮询，无锁竞争，避免线程上下文切换开销</li>
+<li>时效性比较差，误差能够在 100ms 左右</li>
+</ul>
+</li>
+<li>go 定时器实现<ul>
+<li>与Java不同的是，go中的线程数量比较少，没有专门启动一个线程获取，触发是通过调度器和监控系统调用netpoll()轮询是否有到达的定时任务发生 </li>
+<li>通信：使用管道进行通信中断阻塞在netpoll()中的线程,让网络轮询器立刻返回并让运行时检查是否有需要触发的计时器。</li>
+</ul>
+</li>
+</ul>
+<h3 id="api限速"><a href="#api限速" class="headerlink" title="api限速"></a>api限速</h3><h4 id="令牌桶"><a href="#令牌桶" class="headerlink" title="令牌桶"></a><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/20872901">令牌桶</a></h4><ul>
+<li>算法：<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">access</span><span class="params">(String userId)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    String key = genKey(userId);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> (Jedis jedis = jedisPool.getResource()) &#123;</span><br><span class="line">        Map&lt;String, String&gt; counter = jedis.hgetAll(key);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (counter.size() == <span class="number">0</span>) &#123;</span><br><span class="line">            TokenBucket tokenBucket = <span class="keyword">new</span> TokenBucket(System.currentTimeMillis(), limit - <span class="number">1</span>);</span><br><span class="line">            jedis.hmset(key, tokenBucket.toHash());</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            TokenBucket tokenBucket = TokenBucket.fromHash(counter);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">long</span> lastRefillTime = tokenBucket.getLastRefillTime();</span><br><span class="line">            <span class="keyword">long</span> refillTime = System.currentTimeMillis();</span><br><span class="line">            <span class="keyword">long</span> intervalSinceLast = refillTime - lastRefillTime;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">long</span> currentTokensRemaining;</span><br><span class="line">            <span class="keyword">if</span> (intervalSinceLast &gt; intervalInMills) &#123;</span><br><span class="line">                currentTokensRemaining = limit;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">long</span> grantedTokens = (<span class="keyword">long</span>) (intervalSinceLast / intervalPerPermit);</span><br><span class="line">                System.out.println(grantedTokens);</span><br><span class="line">                currentTokensRemaining = Math.min(grantedTokens + tokenBucket.getTokensRemaining(), limit);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            tokenBucket.setLastRefillTime(refillTime);</span><br><span class="line">            <span class="keyword">assert</span> currentTokensRemaining &gt;= <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">if</span> (currentTokensRemaining == <span class="number">0</span>) &#123;</span><br><span class="line">                tokenBucket.setTokensRemaining(currentTokensRemaining);</span><br><span class="line">                jedis.hmset(key, tokenBucket.toHash());</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                tokenBucket.setTokensRemaining(currentTokensRemaining - <span class="number">1</span>);</span><br><span class="line">                jedis.hmset(key, tokenBucket.toHash());</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>上面的方法是最初的实现方法，对于每一个 Token Bucket，在 Redis 上面，使用一个 Hash 进行表示，一个 Token Bucket 有 lastRefillTime 表示最后一次补充 Token 的时间，tokensRemaining 则表示 Bucket 中的剩余 Token 数量，access() 方法大致的步骤为：</p>
+<ol>
+<li>当一个请求 Token进入 access() 方法后，先计算计算该请求的 Token Bucket 的 key；</li>
+<li>如果这个 Token Bucket 在 Redis 中不存在，那么就新建一个 Token Bucket，然后设置该 Bucket 的 Token 数量为最大值减一(去掉了这次请求获取的 Token）。 在初始化 Token Bucket 的时候将 Token 数量设置为最大值这一点在后面还有讨论；</li>
+<li>如果这个 Token Bucket 在 Redis 中存在，而且其上一次加入 Token 的时间到现在时间的时间间隔大于 Token Bucket 的 interval，那么也将 Bucket 的 Token 值重置为最大值减一；</li>
+<li>如果 Token Bucket 上次加入 Token 的时间到现在时间的时间间隔没有大于 interval，那么就计算这次需要补充的 Token 数量，将补充过后的 Token 数量更新到 Token Bucket 中。</li>
+</ol>
+<ul>
+<li><p>问题：<br>当用户首次请求 Token 或者长时间没有请求 Token 的情况下，首次进行 Token 请求，Bucket 此时所持有的 Token 数量应该是可以设置的，而不是一个简单的 Token Bucket 的容量最大值。因为我们的算法在 Token Bucket 被激活（第一次使用，或者间隔时间很长后使用）之后，会不断地往里面继续添加 Token（在用户请求的时候）， 这样在一个 interval 之内，用户所能够使用最大 Token 数量 M 等于初始的 Token 数量 I 加上 Bucket 的 Token 容量最大值 C。</p>
+<ul>
+<li>我现在做的改动比较有限，在 RateLimitPolicy 当中添加一个 maxBurstTime，然后计算 Bucket 激活的时候 初始的 Token 容量。程序创建一个 RateLimitPolicy 的时候，需要指定这个 maxBurstTime。关于这个初始容量的设置与计算 可以进一步参考 Guava 的 SmoothRateLimiter 中的文档和代码。</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer"><div class="post-widgets">
+      <div id="needsharebutton-postbottom">
+        <span class="btn">
+          <i class="fa fa-share-alt" aria-hidden="true"></i>
+        </span>
+      </div>
+    </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/11/19/es/" rel="prev" title="es">
+                  <i class="fa fa-chevron-left"></i> es
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/11/27/epoll/" rel="next" title="epoll">
+                  epoll <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Xuwudong</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">88k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">1:20</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+<!--
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/pisces/" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div> -->
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/hexo-generator-searchdb@1.4.0/dist/search.js" integrity="sha256-vXZMYLEqsROAXkEw93GGIvaB2ab+QW6w3+1ahD9nXXA=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+  <script src="/js/third-party/pace.js"></script>
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+  <script src="//cdn.jsdelivr.net/gh/theme-next/theme-next-needmoreshare2@1/needsharebutton.min.js"></script>
+  <script>
+      pbOptions = {};
+        pbOptions.iconStyle = "box";
+        pbOptions.boxForm = "horizontal";
+        pbOptions.position = "bottomCenter";
+        pbOptions.networks = "Weibo,Wechat,Douban,QQZone,Twitter,Facebook";
+      new needShareButton('#needsharebutton-postbottom', pbOptions);
+  </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Xuwudong","repo":"gitalk_repo","client_id":"f258dfc8962a1ec9a80a","client_secret":"6d1c6eec044fe7e76923669aa5827769f0e6c2da","admin_user":"Xuwudong","distraction_free_mode":false,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"7c4fe6cef465f9aa205db307a7c94689"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
