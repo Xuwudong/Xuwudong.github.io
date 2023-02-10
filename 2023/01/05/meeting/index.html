@@ -7,9 +7,9 @@
 <meta name="generator" content="Hexo 5.4.2">
 
 
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/img.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/img.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/img.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/write.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/write.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/write.png">
   <link rel="mask-icon" href="/images/img.svg" color="#222">
   <meta name="google-site-verification" content="69bK5ZQVeGNmYYemcahCtIRNHf3zwEGBq1fT4SgEQVA">
   <meta name="baidu-site-verification" content="code-wI49Lf6M4i">
@@ -33,7 +33,7 @@
 <meta property="og:description" content="ddd10亿数求前100业务安全设计调度系统 1.7面试题 redis如何解决分布式锁的可靠性？   解锁需要判断删除的value是不是当前加锁的value，用lua脚本保证原子性 缺点： 超时时间不好控制 守护进程续约超时时间   Redis 主从复制模式中的数据是异步复制的，这样导致分布式锁的不可靠性   red-lock 让客户端和多个独立的 Redis 节点依次请求申请加锁，如果客户端能够">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-01-05T07:59:41.000Z">
-<meta property="article:modified_time" content="2023-01-29T04:16:31.426Z">
+<meta property="article:modified_time" content="2023-02-08T09:23:11.150Z">
 <meta property="article:author" content="Xuwudong">
 <meta name="twitter:card" content="summary">
 
@@ -180,7 +180,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-count">34</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -274,7 +274,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2023-01-29 12:16:31" itemprop="dateModified" datetime="2023-01-29T12:16:31+08:00">2023-01-29</time>
+        <time title="修改时间：2023-02-08 17:23:11" itemprop="dateModified" datetime="2023-02-08T17:23:11+08:00">2023-02-08</time>
       </span>
 
   
@@ -291,14 +291,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>2.8k</span>
+      <span>4.2k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>3 分钟</span>
+      <span>4 分钟</span>
     </span>
 </div>
 
@@ -372,6 +372,117 @@
 <p>但这就会导致 CPU 在寻址的过程中，需要有很多层表参与，加大了时间上的开销。于是根据程序的局部性原理，在 CPU 芯片中加入了 TLB，负责缓存最近常被访问的页表项，大大提高了地址的转换速度。</p>
 <p>Linux 系统主要采用了分页管理，但是由于 Intel 处理器的发展史，Linux 系统无法避免分段管理。于是 Linux 就把所有段的基地址设为 0，也就意味着所有程序的地址空间都是线性地址空间（虚拟地址），相当于屏蔽了 CPU 逻辑地址的概念，所以段只被用于访问控制和内存保护。</p>
 <p>另外，Linxu 系统中虚拟空间分布可分为用户态和内核态两部分，其中用户态的分布：代码段、全局变量、BSS、函数栈、堆内存、映射区。</p>
+<ul>
+<li><p>项目</p>
+<ul>
+<li><p>多益</p>
+<ul>
+<li>top10 堆</li>
+<li>秒杀 Redis队列将请求排队 先进先出 缺点（占内存），计数统计</li>
+</ul>
+</li>
+<li><p>BIGO</p>
+<ul>
+<li>分布式ID 雪花算法 优缺点<ul>
+<li>机器号 使用REDIS INCR获取机器号 ；大于等于上限99时加分布式锁删除机器号的key以限制机器号</li>
+<li>mod(业务ID) 将统一用户ID的订单分片到同一个分片库中</li>
+<li>缺点 存在时钟偏移的问题 解决办法：记录上次生成ID的时间，自旋等待当前时间大于上次生成ID的时间</li>
+</ul>
+</li>
+<li>分布式锁 Redis zookeeper实现优缺点</li>
+<li>Saga（DOService DOSuccess DOFail）TCC（conform或者Fail重试后仍失败则记录日志进行回滚） 2PC 3PC raft </li>
+<li>定时对账 线下补偿</li>
+<li>Redis缓存</li>
+<li>分库分表</li>
+<li>xxljob 搭建与迁移定时任务</li>
+</ul>
+</li>
+<li><p>字节</p>
+<ul>
+<li>教育<ul>
+<li>CMS平台 DDD 示例 TODO</li>
+<li>公告 <ul>
+<li>ES使用 写流程，读流程 近实时，通过refresh（）达到完全实时</li>
+<li>压测tps上不去， 报invalid connection异常 update语句没有加索引导致，服务端超时时间内拿不到锁报的异常</li>
+</ul>
+</li>
+<li>日历 读、写扩散，新日程数据推拉模型</li>
+<li>erds client开发</li>
+<li>协同管理工作<ul>
+<li>统一将云平台接口迁移到开平</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>物流 <ul>
+<li>api 迁移正确性保证 bcp对比</li>
+<li>超时治理 <ul>
+<li>内部治理（优化代码+调整超时时间+幂等接口自动重试）</li>
+<li>外部治理 控制重试策略（避免流量放大）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul>
+<li>限流</li>
+<li>判断图是否有环</li>
+<li>容器技术原理</li>
+<li>zookeeper</li>
+<li>异地多活 <a target="_blank" rel="noopener" href="http://kaito-kidd.com/2021/10/15/what-is-the-multi-site-high-availability-design/">http://kaito-kidd.com/2021/10/15/what-is-the-multi-site-high-availability-design/</a></li>
+<li>TCC异常情况</li>
+<li>MySQL主从切换</li>
+<li>朋友圈设计</li>
+</ul>
+<ul>
+<li>HR面试<ul>
+<li>离职原因<ul>
+<li>字节工作太忙了，每天的节奏都很快，创业时和在国际电商都是10点下班</li>
+<li>工作业绩没有得到应有的认可</li>
+<li>团队氛围不是很好</li>
+</ul>
+</li>
+<li>选择酷狗的原因<ul>
+<li>酷狗工作节奏相对来说没有那么快</li>
+<li>业务比较稳定，能够持续发展</li>
+<li>有朋友在酷狗，反馈公司不错，也拿了S级员工</li>
+</ul>
+</li>
+<li>未来2-3年职业规划<ul>
+<li>增强工作业务能力，工作中积累处理各种复杂业务的技术方案相关经验，定期输出技术文章在团队内分享，和业务团队一起共同成长</li>
+<li>业余时间学习k8s、分布式存储具体实现细节(比如etcd)等技术栈，多逛开源论坛，并尝试提交mr,争取为开源项目做出一定的贡献,进一步增强技术能力</li>
+<li>增强项目规划，项目进度把控能力；增强沟通表达能力，争取能够在贵公司更上一层楼</li>
+</ul>
+</li>
+<li>期望薪酬<ul>
+<li>先问对方大概能给到多少 </li>
+<li>期望在目前薪资的基础上，增加10%左右，也是对自己在字节过去一两年里努力工作成长的一个认可</li>
+</ul>
+</li>
+<li>觉得部门整体哪些做得好，哪些做的不好<ul>
+<li>丰富的SOP文档；</li>
+<li>技术评审会拉上组内同学，大家各抒己见，避免个人思维局限留下问题。</li>
+<li>每两周一次的技术分享，增强技术能力与视野；</li>
+<li>分工明确，边界清晰；上线工作流校验功能完善，能够最大可能避免bug;</li>
+<li>有时需求沟通没有做好，没有一个统一的群去同步信息；api文档由产品维护的不好。</li>
+</ul>
+</li>
+<li>目前做的比较有成就感的工作<ul>
+<li>独自负责分拣子系统的开发与运维工作，独自把控项目进度，解决需求技术难题，保持与产品，前端，测试同学的良好沟通与合作。</li>
+</ul>
+</li>
+<li>怎么处理矛盾<ul>
+<li>换位思考，想下别人的困境和期望是什么；如果有信息不对等或者其他原因造成的误会，就尽力消除误会；如果是对方自己原因就帮对方想下对策</li>
+<li>力求双赢，无法保证双赢就冷静下来好好讲逻辑，一般这里能解决问题，如果逻辑讲不通，自上而下推动</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 <!-- flag of hidden posts -->
     </div>
 
@@ -419,13 +530,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">88k</span>
+    <span title="站点总字数">96k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">1:20</span>
+    <span title="站点阅读时长">1:27</span>
   </span>
 </div>
 <div class="busuanzi-count">

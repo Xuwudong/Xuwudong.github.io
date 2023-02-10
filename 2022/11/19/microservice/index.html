@@ -7,9 +7,9 @@
 <meta name="generator" content="Hexo 5.4.2">
 
 
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/img.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/img.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/img.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/write.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/write.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/write.png">
   <link rel="mask-icon" href="/images/img.svg" color="#222">
   <meta name="google-site-verification" content="69bK5ZQVeGNmYYemcahCtIRNHf3zwEGBq1fT4SgEQVA">
   <meta name="baidu-site-verification" content="code-wI49Lf6M4i">
@@ -25,15 +25,15 @@
   <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.cn","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
-<meta name="description" content="一点技术与经验分享">
+<meta name="description" content="限流这篇文章介绍实现限流的几种方式，主要是窗口算法和桶算法，两者各有优势。 窗口算法实现简单，逻辑清晰，可以很直观的得到当前的 QPS 情况，但是会有时间窗口的临界突变问题，而且不像桶一样有队列可以缓冲。桶算法虽然稍微复杂，不好统计 QPS 情况，但是桶算法也有优势所在。漏桶模式消费速率恒定，可以很好的保护自身系统，可以对流量进行整形，但是面对突发流量不能快速响应。令牌桶模式可以面对突发流量，但是">
 <meta property="og:type" content="article">
 <meta property="og:title" content="microservice">
 <meta property="og:url" content="https://www.9932xt.cn/2022/11/19/microservice/index.html">
 <meta property="og:site_name" content="TecHub">
-<meta property="og:description" content="一点技术与经验分享">
+<meta property="og:description" content="限流这篇文章介绍实现限流的几种方式，主要是窗口算法和桶算法，两者各有优势。 窗口算法实现简单，逻辑清晰，可以很直观的得到当前的 QPS 情况，但是会有时间窗口的临界突变问题，而且不像桶一样有队列可以缓冲。桶算法虽然稍微复杂，不好统计 QPS 情况，但是桶算法也有优势所在。漏桶模式消费速率恒定，可以很好的保护自身系统，可以对流量进行整形，但是面对突发流量不能快速响应。令牌桶模式可以面对突发流量，但是">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-11-19T08:23:18.000Z">
-<meta property="article:modified_time" content="2023-01-11T14:34:54.538Z">
+<meta property="article:modified_time" content="2023-02-06T03:34:36.525Z">
 <meta property="article:author" content="Xuwudong">
 <meta property="article:tag" content="微服务">
 <meta name="twitter:card" content="summary">
@@ -180,7 +180,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">33</span>
+          <span class="site-state-item-count">34</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -274,7 +274,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2023-01-11 22:34:54" itemprop="dateModified" datetime="2023-01-11T22:34:54+08:00">2023-01-11</time>
+        <time title="修改时间：2023-02-06 11:34:36" itemprop="dateModified" datetime="2023-02-06T11:34:36+08:00">2023-02-06</time>
       </span>
 
   
@@ -291,7 +291,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>0</span>
+      <span>330</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -309,7 +309,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        
+        <p>限流<br>这篇文章介绍实现限流的几种方式，主要是窗口算法和桶算法，两者各有优势。</p>
+<p>窗口算法实现简单，逻辑清晰，可以很直观的得到当前的 QPS 情况，但是会有时间窗口的临界突变问题，而且不像桶一样有队列可以缓冲。<br>桶算法虽然稍微复杂，不好统计 QPS 情况，但是桶算法也有优势所在。<br>漏桶模式消费速率恒定，可以很好的保护自身系统，可以对流量进行整形，但是面对突发流量不能快速响应。<br>令牌桶模式可以面对突发流量，但是启动时会有缓慢加速的过程，不过常见的开源工具中已经对此优化。<br><a target="_blank" rel="noopener" href="https://www.wdbyte.com/java/rate-limiter.html#_7-3-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E9%99%90%E6%B5%81">https://www.wdbyte.com/java/rate-limiter.html#_7-3-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E9%99%90%E6%B5%81</a></p>
+
     </div>
 
     
@@ -371,13 +373,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">88k</span>
+    <span title="站点总字数">96k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">1:20</span>
+    <span title="站点阅读时长">1:27</span>
   </span>
 </div>
 <div class="busuanzi-count">
