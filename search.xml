@@ -2273,6 +2273,9 @@
     <title>java基础</title>
     <url>/2023/02/07/java%E5%9F%BA%E7%A1%80/</url>
     <content><![CDATA[<p>Java 不提供指针来直接访问内存，程序内存更加安全。可以使用线性分配器分配内存（<strong>因为线性分配器需要与具有拷贝特性的垃圾回收算法配合</strong>，所以 C 和 C++ ，<br>go等需要直接对外暴露指针的语言就无法使用该策略）</p>
+<span id="more"></span>
+
+
 <p>包装类型属于对象类型，我们知道几乎所有对象实例都存在于堆中。 为什么说是几乎所有对象实例呢？ 这是因为 HotSpot 虚拟机引入了 JIT 优化之后，<br>会对对象进行逃逸分析，如果发现某一个对象并没有逃逸到方法外部，那么就可能通过标量替换来实现栈上分配，而避免堆上分配内存</p>
 <p>volatile 关键字其实并非是 Java 语言特有的，在 C 语言里也有，它最原始的意义就是<strong>禁用 CPU 缓存</strong>。如果我们将一个变量使用 volatile 修饰，<br>这就指示 编译器，这个变量是共享且不稳定的，每次使用它都到主存中进行读取。<br>在 Java 中，volatile 关键字除了可以保证变量的可见性，还有一个重要的作用就是<strong>防止 JVM 的指令重排序</strong></p>
 <p><a href="https://javaguide.cn/java/concurrent/java-concurrent-questions-02.html#threadlocal-%E5%86%85%E5%AD%98%E6%B3%84%E9%9C%B2%E9%97%AE%E9%A2%98%E6%98%AF%E6%80%8E%E4%B9%88%E5%AF%BC%E8%87%B4%E7%9A%84">threadloal内存泄漏问题</a></p>
