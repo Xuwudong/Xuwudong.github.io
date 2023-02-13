@@ -2366,7 +2366,7 @@
 <p><a href="https://developer.aliyun.com/article/766880">https://developer.aliyun.com/article/766880</a></p>
 </blockquote>
 <ul>
-<li><img src="../images/java%E5%9F%BA%E7%A1%80/circle_depencenties.png" alt="img.png"></li>
+<li><img src="/images/java%E5%9F%BA%E7%A1%80/circle_depencenties.png" alt="img.png"></li>
 <li>以上面A、B类使用属性field注入循环依赖的例子为例，对整个流程做文字步骤总结如下：<ul>
 <li>使用context.getBean(A.class)，旨在获取容器内的单例A(若A不存在，就会走A这个Bean的创建流程)，显然初次获取A是不存在的，因此走A的创建之路~</li>
 <li>实例化A（注意此处仅仅是实例化），并将它放进缓存（此时A已经实例化完成，已经可以被引用了）</li>
