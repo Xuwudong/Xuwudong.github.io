@@ -25,33 +25,27 @@
   <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.pro","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
-<meta name="description" content="设计原理栈区的内存一般由编译器自动分配和释放，其中存储着函数的入参以及局部变量，这些参数会随着函数的创建而创建，函数的返回而消亡，一般不会在程序中长期存在，这种线性的内存分配策略有着极高地效率，但是工程师也往往不能控制栈内存的分配，这部分工作基本都是由编译器完成的。">
+<meta name="description" content="系统概述元数据 master主要存储三种元数据：文件和chunk的命名空间（namespace）、文件到chunk的映射和chunk的每个副本的位置。所有元数据被存储在master的内存中。前两种类型（文件和快的命名空间、文件到chunk的映射）还通过将变更（mutation）记录到一个操作日志（operation log）的方式持久化存储在master的磁盘上，并在远程机器上备份。通过日志，我们">
 <meta property="og:type" content="article">
-<meta property="og:title" content="go栈内存管理">
-<meta property="og:url" content="https://www.9932xt.pro/2022/12/30/go-stack-management/index.html">
+<meta property="og:title" content="gfs">
+<meta property="og:url" content="https://www.9932xt.pro/2023/06/17/gfs/index.html">
 <meta property="og:site_name" content="TecHub">
-<meta property="og:description" content="设计原理栈区的内存一般由编译器自动分配和释放，其中存储着函数的入参以及局部变量，这些参数会随着函数的创建而创建，函数的返回而消亡，一般不会在程序中长期存在，这种线性的内存分配策略有着极高地效率，但是工程师也往往不能控制栈内存的分配，这部分工作基本都是由编译器完成的。">
+<meta property="og:description" content="系统概述元数据 master主要存储三种元数据：文件和chunk的命名空间（namespace）、文件到chunk的映射和chunk的每个副本的位置。所有元数据被存储在master的内存中。前两种类型（文件和快的命名空间、文件到chunk的映射）还通过将变更（mutation）记录到一个操作日志（operation log）的方式持久化存储在master的磁盘上，并在远程机器上备份。通过日志，我们">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://www.9932xt.pro/images/go_stack_management/img.png">
-<meta property="og:image" content="https://www.9932xt.pro/images/go_stack_management/img_1.png">
-<meta property="og:image" content="https://www.9932xt.pro/images/go_stack_management/img_2.png">
-<meta property="og:image" content="https://www.9932xt.pro/images/go_stack_management/img_3.png">
-<meta property="article:published_time" content="2022-12-30T04:38:41.000Z">
-<meta property="article:modified_time" content="2023-01-11T14:34:54.540Z">
+<meta property="article:published_time" content="2023-06-17T05:51:43.000Z">
+<meta property="article:modified_time" content="2023-07-30T15:24:28.258Z">
 <meta property="article:author" content="Xuwudong">
-<meta property="article:tag" content="栈">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.9932xt.pro/images/go_stack_management/img.png">
 
 
-<link rel="canonical" href="https://www.9932xt.pro/2022/12/30/go-stack-management/">
+<link rel="canonical" href="https://www.9932xt.pro/2023/06/17/gfs/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.pro/2022/12/30/go-stack-management/","path":"2022/12/30/go-stack-management/","title":"go栈内存管理"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.pro/2023/06/17/gfs/","path":"2023/06/17/gfs/","title":"gfs"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>go栈内存管理 | TecHub</title>
+<title>gfs | TecHub</title>
   
   <script class="next-config" data-name="google_analytics" type="application/json">{"tracking_id":"G-GCKHLYND9T","only_pageview":true}</script>
   <script src="/js/third-party/analytics/google-analytics.js"></script>
@@ -171,7 +165,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">设计原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AF%84%E5%AD%98%E5%99%A8"><span class="nav-number">1.1.</span> <span class="nav-text">寄存器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%A0%88"><span class="nav-number">1.2.</span> <span class="nav-text">线程栈</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%83%E9%80%B8%E5%88%86%E6%9E%90"><span class="nav-number">1.3.</span> <span class="nav-text">逃逸分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%88%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="nav-number">1.4.</span> <span class="nav-text">栈内存空间</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E6%AE%B5%E6%A0%88"><span class="nav-number">1.4.1.</span> <span class="nav-text">分段栈</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%9E%E7%BB%AD%E6%A0%88"><span class="nav-number">1.4.2.</span> <span class="nav-text">连续栈</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">2.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">系统概述</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE"><span class="nav-number">1.1.</span> <span class="nav-text">元数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.1.1.</span> <span class="nav-text">内存数据结构</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#chunk%E4%BD%8D%E7%BD%AE"><span class="nav-number">1.1.2.</span> <span class="nav-text">chunk位置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E6%97%A5%E5%BF%97"><span class="nav-number">1.2.</span> <span class="nav-text">操作日志</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E8%87%B4%E6%80%A7%E6%A8%A1%E5%9E%8B"><span class="nav-number">2.</span> <span class="nav-text">一致性模型</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E4%BA%A4%E4%BA%92"><span class="nav-number">3.</span> <span class="nav-text">系统交互</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A7%9F%E7%BA%A6%E4%B8%8E%E5%8F%98%E6%9B%B4%E9%A1%BA%E5%BA%8F"><span class="nav-number">3.1.</span> <span class="nav-text">租约与变更顺序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E6%B5%81"><span class="nav-number">3.2.</span> <span class="nav-text">数据流</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E5%AD%90%E6%80%A7record-append"><span class="nav-number">3.3.</span> <span class="nav-text">原子性record append</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E7%85%A7"><span class="nav-number">3.4.</span> <span class="nav-text">快照</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -249,7 +243,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.9932xt.pro/2022/12/30/go-stack-management/">
+    <link itemprop="mainEntityOfPage" href="https://www.9932xt.pro/2023/06/17/gfs/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/techub.jpg">
@@ -262,7 +256,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          go栈内存管理
+          gfs
         </h1>
 
         <div class="post-meta-container">
@@ -273,28 +267,15 @@
       </span>
       <span class="post-meta-item-text">发表于</span>
 
-      <time title="创建时间：2022-12-30 12:38:41" itemprop="dateCreated datePublished" datetime="2022-12-30T12:38:41+08:00">2022-12-30</time>
+      <time title="创建时间：2023-06-17 13:51:43" itemprop="dateCreated datePublished" datetime="2023-06-17T13:51:43+08:00">2023-06-17</time>
     </span>
       <span class="post-meta-item">
         <span class="post-meta-item-icon">
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2023-01-11 22:34:54" itemprop="dateModified" datetime="2023-01-11T22:34:54+08:00">2023-01-11</time>
+        <time title="修改时间：2023-07-30 23:24:28" itemprop="dateModified" datetime="2023-07-30T23:24:28+08:00">2023-07-30</time>
       </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/go/" itemprop="url" rel="index"><span itemprop="name">go</span></a>
-        </span>
-          ，
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/go/%E5%86%85%E5%AD%98/" itemprop="url" rel="index"><span itemprop="name">内存</span></a>
-        </span>
-    </span>
 
   
     <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
@@ -310,14 +291,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>1.2k</span>
+      <span>2.6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>1 分钟</span>
+      <span>2 分钟</span>
     </span>
 </div>
 
@@ -328,45 +309,27 @@
     
     
     <div class="post-body" itemprop="articleBody">
-        <h2 id="设计原理"><a href="#设计原理" class="headerlink" title="设计原理"></a>设计原理</h2><p>栈区的内存一般由编译器自动分配和释放，<strong>其中存储着函数的入参以及局部变量，这些参数会随着函数的创建而创建，函数的返回而消亡，一般不会在程序中长期存在</strong>，<br>这种线性的内存分配策略有着极高地效率，但是工程师也往往不能控制栈内存的分配，这部分工作基本都是由编译器完成的。</p>
-<span id="more"></span>
-<h3 id="寄存器"><a href="#寄存器" class="headerlink" title="寄存器"></a>寄存器</h3><ol>
-<li><p>Go 语言的汇编代码包含 BP 和 SP 两个栈寄存器，它们分别存储了栈的基址指针和栈顶的地址<br><img src="/images/go_stack_management/img.png" alt="img.png"></p>
-</li>
-<li><p>当应用程序申请或者释放栈内存时只需要修改 SP 寄存器的值，这种线性的内存分配方式与堆内存相比更加快速，仅会带来极少的额外开销。</p>
-<h3 id="线程栈"><a href="#线程栈" class="headerlink" title="线程栈"></a>线程栈</h3></li>
-<li><p>多数架构上默认栈大小都在 2 ~ 4 MB 左右，极少数架构会使用 32 MB 的栈，用户程序可以在分配的栈上存储函数参数和局部变量。</p>
-</li>
-<li><p>线程和进程都是代码执行的上下文，但是如果一个应用程序包含成百上千个执行上下文并且每个上下文都是线程，会占用大量的内存空间并带来其他的额外开销，<br>Go 语言在设计时认为执行上下文是轻量级的，所以它在用户态实现 Goroutine 作为执行上下文。</p>
-<h3 id="逃逸分析"><a href="#逃逸分析" class="headerlink" title="逃逸分析"></a>逃逸分析</h3><p>手动分配内存会导致如下的两个问题：</p>
-</li>
-<li><p>不需要分配到堆上的对象分配到了堆上 — 浪费内存空间；</p>
-</li>
-<li><p>需要分配到堆上的对象分配到了栈上 — 悬挂指针、影响内存安全；<br>在编译器优化中，<strong>逃逸分析是用来决定指针动态作用域的方法</strong>。</p>
-</li>
-</ol>
-<ul>
-<li>Go 语言的编译器使用逃逸分析决定哪些变量应该在栈上分配，哪些变量应该在堆上分配，其中包括使用 new、make 和字面量等方法隐式分配的内存，Go 语言的逃逸分析遵循以下两个不变性：</li>
-</ul>
-<ol>
-<li>指向栈对象的指针不能存在于堆中；</li>
-<li>指向栈对象的指针不能在栈对象回收后存活；<br><img src="/images/go_stack_management/img_1.png" alt="img_1.png"></li>
-</ol>
-<h3 id="栈内存空间"><a href="#栈内存空间" class="headerlink" title="栈内存空间"></a>栈内存空间</h3><p>Goroutine 的初始栈大小为 2KB</p>
-<h4 id="分段栈"><a href="#分段栈" class="headerlink" title="分段栈"></a>分段栈</h4><p> <img src="/images/go_stack_management/img_2.png" alt="img_2.png"></p>
-<p>分段栈机制虽然能够按需为当前 Goroutine 分配内存并且及时减少内存的占用，但是它也存在两个比较大的问题：</p>
-<ol>
-<li>如果当前 Goroutine 的栈几乎充满，那么任意的函数调用都会触发栈扩容，当函数返回后又会触发栈的收缩，如果在一个循环中调用函数，栈的分配和释放就会造成巨大的额外开销，<strong>这被称为热分裂问题</strong>（Hot split）；</li>
-<li>一旦 Goroutine <strong>使用的内存越过了分段栈的扩缩容阈值</strong>，运行时会触发栈的扩容和缩容，带来额外的工作量；</li>
-</ol>
-<h4 id="连续栈"><a href="#连续栈" class="headerlink" title="连续栈"></a>连续栈</h4><p>连续栈可以解决分段栈中存在的两个问题，其核心原理是每当程序的栈空间不足时，初始化一片更大的栈空间并将原栈中的所有值都迁移到新栈中，<br>新的局部变量或者函数调用就有充足的内存空间。使用连续栈机制时，栈空间不足导致的扩容会经历以下几个步骤：</p>
-<ol>
-<li>在内存空间中分配更大的栈内存空间；</li>
-<li>将旧栈中的所有内容复制到新栈中；</li>
-<li><strong>将指向旧栈对应变量的指针重新指向新栈</strong>；</li>
-<li>销毁并回收旧栈的内存空间；<br><img src="/images/go_stack_management/img_3.png" alt="img_3.png"><br>因为需要拷贝变量和调整指针，连续栈增加了栈扩容时的额外开销，但是通过合理栈缩容机制就能避免热分裂带来的性能问题10，在 GC 期间如果 Goroutine 使用了栈内存的四分之一，<br>那就将其内存减少一半，这样在栈内存几乎充满时也只会扩容一次，不会因为函数调用频繁扩缩容。</li>
-</ol>
-<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p><a target="_blank" rel="noopener" href="https://draveness.me/golang/docs/part3-runtime/ch07-memory/golang-stack-management/#%E7%BA%BF%E7%A8%8B%E6%A0%88">go-栈内存管理</a></p>
+        <h2 id="系统概述"><a href="#系统概述" class="headerlink" title="系统概述"></a>系统概述</h2><h3 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h3><blockquote>
+<p>master主要存储三种元数据：文件和chunk的命名空间（namespace）、文件到chunk的映射和chunk的每个副本的位置。<br>所有元数据被存储在master的内存中。前两种类型（文件和快的命名空间、文件到chunk的映射）还通过将变更（mutation）<br>记录到一个操作日志（operation log）的方式持久化存储在master的磁盘上，并在远程机器上备份。通过日志，我们可以简单、<br>可靠地更新master的状态，即使master故障也没有数据不一致的风险。master不会持久化存储chunk的位置信息，<br>而是在启动时和当chunkserver加入集群时向chunkserver询问其存储的chunk信息。</p>
+</blockquote>
+<h4 id="内存数据结构"><a href="#内存数据结构" class="headerlink" title="内存数据结构"></a>内存数据结构</h4><p>大多数文件包含多个chunk，所以大部分chunk是满的，仅最后一个chunk被部分填充。并且因为采用了<strong>前缀压缩</strong>的方式紧凑地存储文件名，每个文件的命名空间数据通常需要少于64字节。</p>
+<h4 id="chunk位置"><a href="#chunk位置" class="headerlink" title="chunk位置"></a>chunk位置</h4><p>master不会持久化保存哪台chunkserver含有给定的chunk的副本的记录，而是简单地在启动时从chunkserver获取信息<br>优点：实现简单</p>
+<h3 id="操作日志"><a href="#操作日志" class="headerlink" title="操作日志"></a>操作日志</h3><p>操作日志包含重要的元数据变更的历史记录。这是GFS的核心。它不仅是元数据中唯一被持久化的记录，还充当了定义并发操作顺序的逻辑时间线。带有版本号的文件和chunk都在他们被创建时由<strong>逻辑时间唯一、永久地确定</strong><br>我们将操作日志<strong>备份到多台远程主机</strong>上，且只有当当前操作记录条目被本地和远程主机均写入到了磁盘后才能向客户端发出响应。<br>todo 跟raft log有啥区别？<br>checkpoint: btree, async exec</p>
+<h2 id="一致性模型"><a href="#一致性模型" class="headerlink" title="一致性模型"></a>一致性模型</h2><p>在一系列变更执行成功后，被变更的文件区域状态为defined的，且该区域中包含最后一次变更写入的数据。这一点是GFS通过以下方式实现的：<br>（a）对chunk执行变更时，其所有副本按照相同的顺序应用变更（章节3.1）<br>（b）使用chunk版本号（chunk version）来检测因chunkserver宕机而错过了变更的陈旧的chunk副本（章节4.5）。陈旧的chunk副本永远不会在执行变更时被使用，也不会在master返回client请求的chunk的位置时被使用。它们会尽早地被作为垃圾回收。</p>
+<p>由于client会缓存chunk的位置，<strong>在缓存信息刷新前，client可能会访问陈旧的副本。</strong>这个时间窗口会受缓存过期时间和下一次打开文件限制（下一次打开文件会清除文件的所有chunk位置信息）。<br>GFS通过master和所有chunkserver周期性握手的方式来确定故障的chunkserver，并通过校验和（<strong>checksunmming</strong>）的方式检测数据损坏</p>
+<p>GFS应用程序可以通过一些简单的技术来使用其宽松的一致性模型，且这些技术已经因其他目标而被使用，如：依赖append而不是overwrite、检查点、自验证写入（writing self-validating）、自标识记录（self-identifying records）。</p>
+<h2 id="系统交互"><a href="#系统交互" class="headerlink" title="系统交互"></a>系统交互</h2><h3 id="租约与变更顺序"><a href="#租约与变更顺序" class="headerlink" title="租约与变更顺序"></a>租约与变更顺序</h3><p>租约本质是授予某chunk变更数据的权限（选主），避免网络分区造成的脑裂<br>改变chunk或元数据的操作被称为“变更”，如write或append。chunk变更时，其每个副本都会应用变更。我们使用租约（lease）来维护副本间变更顺序的一致性。master向其中一份副本授权一个变更的租约，我们称这个副本为primary（译注：有时也可代指primary副本所在的chunkserver）。primary为应用于该chunk的所有变更选取顺序。所有副本都会按照这个顺序来应用变更。因此，全局的变更顺序首先由master选取的租约授权顺序定义，接着在租约内由primary选取的顺序编号定义。</p>
+<p>这种租约机制是为了<strong>最小化master管理负载</strong>而设计的。租约的初始超时时间为60秒。然而，一旦chunk被变更，primary就可以向master请求延长租约时间，或者（通常为）接受来自master的租约时间延长操作。这些租约延长请求和租约授权请求依赖master与chunkserver间周期性地心跳消息来实现。有时master可能会在租约过期前视图撤销租约（例如，当master想禁止对正在被重命名的文件进行变更时）。即使master与一个primary的通信丢失，master仍可以在旧租约过期后安全地向另一个副本授权新的租约。</p>
+<p>假如 master与primary 的网络断开了，但client与primary网络正常，在该租约内也无法写入数据，因为写入时primary需要与其他secondary通信，其他secondary可能已经被master选取为新的primary，此时secondary拒绝写入。<br>假如master和primary,secondary的网络全断开了，系统在当前租约内可用，数据保持一致，租约过期后系统不可用。</p>
+<h3 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h3><p>数据流沿着一条精心挑选的chunkserver链以<strong>流水线的方式线性推送</strong>。我们的目标是充分利用每台机器的网络带宽，避免网络瓶颈和高延迟的链路，并最小化推送完所有数据的时延。</p>
+<p>为了尽可能地避免网络瓶颈和高延迟的数据链路（例如，交换机间链路（inter-switch）经常同时成为网络瓶颈和高延迟链路），每台机器会将数据传递给在网络拓扑中最近的的且还没有收到数据的机器。</p>
+<p>最后，我们通过流水线的方式通过TCP连接传输数据，以最小化时延。当chunkserver收到一部分数据时，它会立刻开始将数据传递给其他chunkserver。</p>
+<h3 id="原子性record-append"><a href="#原子性record-append" class="headerlink" title="原子性record append"></a>原子性record append</h3><p>多生产者单消费者 模型中使用，想到了kafka的单个分区<br>然而在record append中，client仅需指定待追加的数据。GFS会为其选择一个偏移量，在该偏移量处至少一次地原子性地将数据作为一个连续的字节序列追加到文件，并将该偏移量返回给client。</p>
+<h3 id="快照"><a href="#快照" class="headerlink" title="快照"></a>快照</h3><p>使用类似AFS[5]的标准的<strong>写入时复制</strong>技术来实现快照</p>
+<p>小于64M的文件也占用一个</p>
+<p>GFS在逻辑上用一个完整路径名到元数据的查找表来表示命名空间。通过前缀压缩技术，这个查找表可在内存中高效地表示。</p>
+<p>fileName -&gt; {chunk_list}<br>chunk {<br>    handler_id<br>    location<br>}</p>
+<p>todo   前缀压缩<br>todo 校验和计算方式</p>
 
     </div>
 
@@ -381,22 +344,16 @@
         </span>
       </div>
     </div>
-          <div class="post-tags">
-              <a href="/tags/%E6%A0%88/" rel="tag"><i class="fa fa-tag"></i> 栈</a>
-          </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/2022/12/10/go-%E8%B0%83%E5%BA%A6%E5%99%A8/" rel="prev" title="go调度器详解">
-                  <i class="fa fa-chevron-left"></i> go调度器详解
+                <a href="/2023/02/07/java%E5%9F%BA%E7%A1%80/" rel="prev" title="java基础">
+                  <i class="fa fa-chevron-left"></i> java基础
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/2023/01/02/transaction/" rel="next" title="事务">
-                  事务 <i class="fa fa-chevron-right"></i>
-                </a>
             </div>
           </div>
     </footer>
@@ -497,7 +454,7 @@
       new needShareButton('#needsharebutton-postbottom', pbOptions);
   </script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
 
-<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Xuwudong","repo":"gitalk_repo","client_id":"f258dfc8962a1ec9a80a","client_secret":"6d1c6eec044fe7e76923669aa5827769f0e6c2da","admin_user":"Xuwudong","distraction_free_mode":false,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"3e4f9ec3c48ec9d7aef935d301dd8005"}</script>
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Xuwudong","repo":"gitalk_repo","client_id":"f258dfc8962a1ec9a80a","client_secret":"6d1c6eec044fe7e76923669aa5827769f0e6c2da","admin_user":"Xuwudong","distraction_free_mode":false,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"12add5e452b8e0ce662615a0e004928f"}</script>
 <script src="/js/third-party/comments/gitalk.js"></script>
 
 </body>

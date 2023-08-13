@@ -35,6 +35,95 @@
       </tags>
   </entry>
   <entry>
+    <title>算法的奥秘-回溯（3）</title>
+    <url>/2021/06/17/backtracing-3/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天打算分享下回溯算法中的另一种题型–是否存在***，这种题型一般都不用走完整个dfs过程，如果存在就可以直接返回了，这样相当于剪枝了，可以很大程度提升算法执行时间。那还等什么，毁灭吧，赶紧的！</p>
+<p>1、单词搜素</p>
+<p>给定一个二维网格和一个单词，找出该单词是否存在于网格中。</p>
+<p>单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。</p>
+<span id="more"></span>
+
+<p>示例:</p>
+<p>board =</p>
+<p>[</p>
+<p>  [‘A’,’B’,’C’,’E’],</p>
+<p>  [‘S’,’F’,’C’,’S’],</p>
+<p>  [‘A’,’D’,’E’,’E’]</p>
+<p>]</p>
+<p>给定 word = “ABCCED”, 返回 true</p>
+<p>给定 word = “SEE”, 返回 true</p>
+<p>给定 word = “ABCB”, 返回 false</p>
+<p>提示：</p>
+<ul>
+<li><p>board 和 word 中只包含大写和小写英文字母。</p>
+</li>
+<li><p>1 &lt;= board.length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= board[i].length &lt;= 200</p>
+</li>
+<li><p>1 &lt;= word.length &lt;= 10^3</p>
+</li>
+</ul>
+<p>代码：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public boolean exist(char[][] board, String word) &#123;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; board.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (int j = 0; j &lt; board[i].length; j++) &#123;</span><br><span class="line">            boolean[][] used = new boolean[board.length][board[i].length];</span><br><span class="line">            <span class="keyword">if</span> (dfs(i, j, board, word, 0, used)) &#123;</span><br><span class="line">                <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean dfs(int row, int col, char[][] board, String word, int index, boolean[][] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == word.length()) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (row &lt; 0 || row &gt;= board.length || col &lt; 0 || col &gt;= board[row].length || board[row][col] != word.charAt(index) || used[row][col]) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    used[row][col] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    boolean res = dfs(row + 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col + 1, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row - 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col - 1, board, word, index + 1, used);</span><br><span class="line">    used[row][col] = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ol>
+<li><p>可以看到连续四个dfs那里，用的是短路或，这样保证了只要存在true的结果，其他的dfs也就不用递归进去了，也就达到了剪枝的效果。</p>
+</li>
+<li><p>注意这里dfs进去前没有判断边界条件，而是放在了进去后再进行判断，有时候知道怎么做就是写不出来，这点也要注意。</p>
+</li>
+</ol>
+<br>
+2、累加数
+
+<p>累加数是一个字符串，组成它的数字可以形成累加序列。</p>
+<p>一个有效的累加序列必须至少包含 3 个数。除了最开始的两个数以外，字符串中的其他数都等于它之前两个数相加的和。</p>
+<p>给定一个只包含数字 ‘0’-‘9’ 的字符串，编写一个算法来判断给定输入是否是累加数。</p>
+<p>说明: 累加序列里的数不会以 0 开头，所以不会出现 1, 2, 03 或者 1, 02, 3 的情况。</p>
+<p>示例 1:</p>
+<p>输入: “112358”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 1, 2, 3, 5, 8 。1 + 1 = 2, 1 + 2 = 3, 2 + 3 = 5, 3 + 5 = 8</p>
+<p>示例 2:</p>
+<p>输入: “199100199”</p>
+<p>输出: true </p>
+<p>解释: 累加序列为: 1, 99, 100, 199。1 + 99 = 100, 99 + 100 = 199</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private String s;</span><br><span class="line"></span><br><span class="line">private int n;</span><br><span class="line"></span><br><span class="line">public boolean isAdditiveNumber(String num) &#123;</span><br><span class="line">    s = num;</span><br><span class="line">    n = s.length();</span><br><span class="line">    <span class="built_in">return</span> dfs(0, 0, 0, 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> *</span><br><span class="line"> * @param index 下标</span><br><span class="line"> * @param sum 前两个数之和</span><br><span class="line"> * @param previous 前一个数</span><br><span class="line"> * @param count 已经添加的个数</span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> */</span><br><span class="line">private boolean dfs(int index, long sum, long previous, int count) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 3) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // value值用于累加值</span><br><span class="line">    long value = 0;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        // 第一个数是0，而且当前value大于一位，直接<span class="built_in">break</span></span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; s.charAt(index) == <span class="string">&#x27;0&#x27;</span>) &#123;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        value = value * 10 + s.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 2) &#123;</span><br><span class="line">            <span class="keyword">if</span> (value &lt; sum) &#123;</span><br><span class="line">                // 继续累加value</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (value &gt; sum) &#123;</span><br><span class="line">                // 累加value无意义，直接<span class="built_in">break</span></span><br><span class="line">                <span class="built_in">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 忽略<span class="literal">false</span>结果，妙！</span><br><span class="line">        <span class="keyword">if</span> (dfs(i + 1, previous + value, value, count + 1)) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>注意点：</p>
+<ul>
+<li>这里dfs进去直接忽略了false结果，试想这里如果不忽略false，也返回一个false结果，那么只要一次尝试不成功就不会继续尝试了,这样就没有达到穷举的效果，而一点返回true，说明我们这种字符串分割方法就是我们要的结果，因此可以直接返回true，一层接着一层，最终最外层返回true，给到调用方，结束递归。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>回溯</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>小公司的大梦想 - 秒杀</title>
+    <url>/2021/06/17/spide/</url>
+    <content><![CDATA[<p>&ensp;&ensp;最近工作上有一个限量点餐的需求，本来公司人不多，但是谁知餐厅供应的特色腊肠牛肉饭特少，而员工对这特色饭情有独钟，导致餐厅一开始营业员工就开始疯抢，这也就形成了电商行业中著名的秒杀情景。</p>
+<p>&ensp;&ensp;而此时我以前的代码实现的下单方案是：先从数据库中查询出该时段该菜式的销售量，再与该菜式总的库存进行比较，如果大于库存，直接返回“菜式已售罄”；如果小于库存，则进行后面的下单流程。有一点经验或认知的朋友，一眼就能看出这里存在并发问题。可能是因为一直被动接受业务的原因，直到和同时聊起项目被同事怀疑代码有并发bug时，才仔细一想确实有bug。这里需要指出的是项目使用的语言是Node.js，尽管Node是单线程的，但是单线程只是针对一个请求来说，对于多个请求，还是存在并发问题的。这其中的道理可以类比Java的指令重排：对于单线程，再怎么指令重排也不会影响到线程的执行结果；但是对于别的线程看到的结果就有可能不同了。这也是Java线程安全问题的本质原因。</p>
+<span id="more"></span>
+
+<p>&ensp;&ensp;经过一番查阅资料和请教大佬，最终决定使用redis的列表来做队列，基于排队的理念来实现“秒杀”。具体的将每个菜式的库存保存在Redis中，然后对于每个时段每个菜式的请求用一个list保存（餐厅的菜式供应是分时段的，每个时段开始时菜式库存都会初始化为原来值）。当请求来了先把请求放到队列的右边，然后从左边取出前‘’库存量‘’个请求，判断当前请求是否在这前“库存量”个请求中。如果在，进行下单操作；如果不在，返回‘’库存不足‘’。对应业务具体思路如下：</p>
+<p>&ensp;&ensp;这里对于为了标识每个请求不同，将请求人的 id+uuid.v4() 作为值rpush进对应的菜式列表，如果请求n份菜式，就rpush n次值。因为业务同时需要取消订单、修改订单，取消订单时需要找到添加订单时push进去的值并删除，因此需要将添加订单时push进去的值存起来，这里使用订单orderId做key，添加订单时push进去的值做value存入Redis中；修改订单麻烦一点，因为加菜会rpush进新的请求并判断请求是不是在前“库存量”内，所以在生成订单时如果不满足库存要求，就要将该请求删除掉。另外假设下订单时选了一份菜，修改订单时如果将该菜式数量加1，如果此时生成不同的 id + uuid.v4()值存进去的话，等以后将这两份分别删除的话，就得分别拿到这两份菜式对应的id + uuid.v4()值,如果n次修改订单并添加该菜式的数量，就会生成n个id + uuid.v4()值，这样操作起来就比较麻烦了，所以修改订单时如果对同一个菜式进行修改，使用的id + uuid.v4()值就是这个订单生成时对应的id + uuid.v4() 值，这样带来的另一个问题是修改订单时判断list前‘库存量’个请求的数量要跟修改订单后的数量一致才表示能够进行修改操作，否则返回“库存不足”。</p>
+<p>&ensp;&ensp;核心代码实现如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** </span><br><span class="line">  * &#123;Array&#125; dishes </span><br><span class="line">  * &#123;Number&#125; dishes[*].dishesId  - 菜式id</span><br><span class="line">  * &#123;Number&#125; dishes[*].number    - 菜式数量</span><br><span class="line">  * &#123;String&#125; keyPrefix           - 请求list的key前缀</span><br><span class="line">  * &#123;String&#125; keySuffix           - 请求list的key后缀，由餐厅id + 营业开始时间时间戳组成</span><br><span class="line">  * &#123;String&#125; userValue           - 请求list的请求值，由用户Id + uuid.v4()组成</span><br><span class="line">  * &#123;Object&#125; dishNumberMap &#123;dishId:number&#125;,number表示修改订单成功后该菜式的数量 </span><br><span class="line">  */ </span><br><span class="line"> async <span class="keyword">function</span> checkStock(dishes,keyPrefix,keySuffix,userValue,dishNumberMap)&#123; </span><br><span class="line">     <span class="built_in">let</span> stckMap = &#123;&#125;; // 保存菜式的库存</span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> stock = awaic cache.get(<span class="string">&#x27;stock:&#x27;</span> + dish.dishesId); // 获取菜式库存</span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1)&#123; // -1表示无限库存</span><br><span class="line">             stockMap[dish.dishesId] = stock; </span><br><span class="line">             <span class="keyword">for</span>(<span class="built_in">let</span> i = 0;i&lt;dish.number;i++)&#123; </span><br><span class="line">                 // rpush keyPrefix + dishesId + keySuffix : list </span><br><span class="line">                 await cache.rpush(keyPrefix + dish.dishesId + keySuffix,userValue); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> number = (dishNumberMap &amp;&amp; dishNumberMap[dish.dishesId]) || dish.number; </span><br><span class="line">         <span class="built_in">let</span> stock = stockMap[dish.dishesId]; </span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1) &#123; // -1表示无限库存  </span><br><span class="line">             // 取前stock个请求 </span><br><span class="line">             <span class="built_in">let</span> userValueList = await cache.lrange(keyPrefix + dish.dishesId + keySuffix,0,stock -1); </span><br><span class="line">             <span class="keyword">if</span> ((_.countBy(userValueList)[userValue] || 0) &lt; number)&#123; // 判断数量是否相等 </span><br><span class="line">                 // 队列前stock个请求包含的userVaule个数小于请求的number值，则移除当前请求，为了修改订单时可以push进新的userValue </span><br><span class="line">                 <span class="keyword">for</span> (<span class="built_in">let</span> d of dishes)&#123; </span><br><span class="line">                     await cache.lrem(keyPrefix + d.dishesId + keySuffix, -d.number,userValue); </span><br><span class="line">                 &#125; </span><br><span class="line">                 <span class="built_in">return</span> Promise.reject(<span class="string">&#x27;库存不足&#x27;</span>); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+<p>&ensp;&ensp;总结一下，主要利用了队列来实现对有限资源的请求与分发，以及redis 单线程的特点实现线程安全。当然还有更好的方案，这个方案很简单，但是扩展性很差，而且也不能确定就一定没有问题。如果你有更好的解决方案或者对此有什么问题和见解欢迎留言~</p>
+]]></content>
+      <categories>
+        <category>技术应用</category>
+      </categories>
+      <tags>
+        <tag>秒杀</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>算法的奥秘-回溯（1）</title>
     <url>/2021/06/17/backtracing-1/</url>
     <content><![CDATA[<p>&ensp;&ensp;今天分享一道简单的回溯算法题（在我看来并不简单！），毁灭吧，赶紧的！<br>题目：二进制手表<br>描述：二进制手表顶部有 4 个 LED 代表 小时（0-11），底部的 6 个 LED 代表 分钟（0-59）。</p>
@@ -67,6 +156,74 @@
       </categories>
       <tags>
         <tag>回溯</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>算法的奥秘-栈（基础篇）</title>
+    <url>/2021/06/17/stack-1/</url>
+    <content><![CDATA[<p>&ensp;&ensp;今天分享下栈的基础算法，栈一句话描述就是一个后进先出的容器，跟栈相对立的一个结构是队列，队列的特征是元素先进先出。他们之间可以互相转换。那还等什么，毁灭吧，赶紧的！</p>
+<br>
+1、用队列实现栈
+
+<p>请你仅使用两个队列实现一个后入先出（LIFO）的栈，并支持普通队列的全部四种操作（push、top、pop 和 empty）。</p>
+<span id="more"></span>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">class MyStack &#123;</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue1 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue2 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public MyStack() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x onto stack. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        queue2.add(x);</span><br><span class="line">        while(!queue1.isEmpty()) &#123;</span><br><span class="line">            queue2.add(queue1.poll());</span><br><span class="line">        &#125;</span><br><span class="line">        Queue&lt;Integer&gt; temp = queue1;</span><br><span class="line">        queue1 = queue2;</span><br><span class="line">        queue2 = temp;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element on top of the stack and returns that element. */</span><br><span class="line">    public int pop() &#123;</span><br><span class="line">        return queue1.poll();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the top element. */</span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return queue1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the stack is empty. */</span><br><span class="line">    public boolean empty() &#123;</span><br><span class="line">        return queue1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>入栈操作时，首先将元素入队到queue2,然后将queue1的全部元素依次出队并入队到queue2，此时queue2的前端元素即为新入栈的元素，再将queue1与queue2互换，即queue1的元素即为栈内的元素，queue1的前端和后端分别对应栈顶和栈底。</p>
+</li>
+<li><p>由于每次入栈操作都确保queue1的前端元素为栈顶元素，因此出栈操作和获取栈顶操作都可以简单的实现。</p>
+</li>
+</ul>
+<br>
+  2、用栈实现队列
+
+<p>请你仅使用两个栈实现先入先出队列。队列应当支持一般队列支持的所有操作（push、pop、peek、empty）：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MyQueue &#123;</span><br><span class="line">    Stack&lt;Integer&gt; stack1 = new Stack&lt;&gt;();</span><br><span class="line">    Stack&lt;Integer&gt; stack2 = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public <span class="function"><span class="title">MyQueue</span></span>() &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x to the back of queue. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        <span class="keyword">while</span>(!stack1.isEmpty()) &#123;</span><br><span class="line">            stack2.push(stack1.pop());</span><br><span class="line">        &#125;</span><br><span class="line">        stack1.push(x);</span><br><span class="line">        <span class="keyword">while</span>(!stack2.isEmpty()) &#123;</span><br><span class="line">            stack1.push(stack2.pop());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element from <span class="keyword">in</span> front of queue and returns that element. */</span><br><span class="line">    public int <span class="function"><span class="title">pop</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.pop();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the front element. */</span><br><span class="line">    public int <span class="function"><span class="title">peek</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the queue is empty. */</span><br><span class="line">    public boolean <span class="function"><span class="title">empty</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>元素x入栈时，首先将stack1中的元素依次出栈并入栈到stack2,然后将x入栈到stack1,再将stack2中的元素依次出栈并入栈到stack1,这样x就位于stack1的栈底，而原来stack1中的元素位置没有变化，即实现了队列的效果。</li>
+</ul>
+<br>
+
+<p>  3、最小栈</p>
+<p>设计一个支持 push ，pop ，top 操作，并能在常数时间内检索到最小元素的栈。</p>
+<ul>
+<li>push(x) —— 将元素 x 推入栈中。</li>
+<li>pop() —— 删除栈顶的元素。</li>
+<li>top() —— 获取栈顶元素。</li>
+<li>getMin() —— 检索栈中的最小元素。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MinStack &#123;</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; minStack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * initialize your data structure here.</span><br><span class="line">     */</span><br><span class="line">    public MinStack() &#123;</span><br><span class="line">        minStack.push(Integer.MAX_VALUE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void push(int val) &#123;</span><br><span class="line">        stack.push(val);</span><br><span class="line">        minStack.push(Math.min(minStack.peek(), val));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void pop() &#123;</span><br><span class="line">        int pop = stack.pop();</span><br><span class="line">        minStack.pop();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return stack.peek();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int getMin() &#123;</span><br><span class="line">        return minStack.peek();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>对于栈来说，如果一个元素 a 在入栈时，栈里有其它的元素 b, c, d，那么无论这个栈在之后经历了什么操作，只要 a 在栈中，b, c, d 就一定在栈中，因为在 a 被弹出之前，b, c, d 不会被弹出。</p>
+</li>
+<li><p>因此，在操作过程中的任意一个时刻，只要栈顶的元素是 a，那么我们就可以确定栈里面现在的元素一定是 a, b, c, d。</p>
+</li>
+<li><p>那么，我们可以在每个元素 a 入栈时把当前栈的最小值 m 存储起来。在这之后无论何时，如果栈顶元素是 a，我们就可以直接返回存储的最小值 m。</p>
+</li>
+</ul>
+<br>
+4、最大栈
+
+<p>   和最小栈同样的思路，读者可以自己尝试着写写。</p>
+ <Br> 
+5、队列的最大值
+
+<p>请定义一个队列并实现函数 max_value 得到队列里的最大值，要求函数max_value、push_back 和 pop_front 的均摊时间复杂度都是O(1)。</p>
+<p>若队列为空，pop_front 和 max_value 需要返回 -1</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MaxQueue &#123;</span><br><span class="line">    Queue&lt;Integer&gt; q;</span><br><span class="line">    Deque&lt;Integer&gt; d;</span><br><span class="line"></span><br><span class="line">    public MaxQueue() &#123;</span><br><span class="line">        q = new LinkedList&lt;Integer&gt;();</span><br><span class="line">        d = new LinkedList&lt;Integer&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int max_value() &#123;</span><br><span class="line">        if (d.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        return d.peekFirst();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public void push_back(int value) &#123;</span><br><span class="line">        while (!d.isEmpty() &amp;&amp; d.peekLast() &lt; value) &#123;</span><br><span class="line">            d.pollLast();</span><br><span class="line">        &#125;</span><br><span class="line">        d.offerLast(value);</span><br><span class="line">        q.offer(value);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int pop_front() &#123;</span><br><span class="line">        if (q.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        int ans = q.poll();</span><br><span class="line">        if (ans == d.peekFirst()) &#123;</span><br><span class="line">            d.pollFirst();</span><br><span class="line">        &#125;</span><br><span class="line">        return ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>&ensp;&ensp;这题其实是队列的特性，题目的标签是栈，但是目前没想到利用栈的解法，这里分享一种通过双端队列实现的方法。</p>
+<p>&ensp;&ensp;本算法基于问题的一个重要性质：当一个元素进入队列的时候，它前面所有比它小的元素就不会再对答案产生影响。</p>
+<p>&ensp;&ensp;举个例子，如果我们向队列中插入数字序列 1 1 1 1 2，那么在第一个数字 2 被插入后，数字 2 前面的所有数字 1 将不会对结果产生影响。因为按照队列的取出顺序，数字 2 只能在所有的数字 1 被取出之后才能被取出，因此如果数字 1 如果在队列中，那么数字 2 必然也在队列中，使得数字 1 对结果没有影响。</p>
+<p>&ensp;&ensp;按照上面的思路，我们可以设计这样的方法：从队列尾部插入元素时，我们可以提前取出队列中所有比这个元素小的元素，使得队列中只保留对结果有影响的数字。这样的方法等价于要求维持队列单调递减，即要保证每个元素的前面都没有比它小的元素。</p>
+<p>&ensp;&ensp;那么如何高效实现一个始终递减的队列呢？我们只需要在插入每一个元素 value 时，从队列尾部依次取出比当前元素 value 小的元素，直到遇到一个比当前元素大的元素 value’ 即可。</p>
+</Br>]]></content>
+      <categories>
+        <category>数据结构与算法</category>
+      </categories>
+      <tags>
+        <tag>栈</tag>
       </tags>
   </entry>
   <entry>
@@ -236,163 +393,6 @@
       </tags>
   </entry>
   <entry>
-    <title>算法的奥秘-回溯（3）</title>
-    <url>/2021/06/17/backtracing-3/</url>
-    <content><![CDATA[<p>&ensp;&ensp;今天打算分享下回溯算法中的另一种题型–是否存在***，这种题型一般都不用走完整个dfs过程，如果存在就可以直接返回了，这样相当于剪枝了，可以很大程度提升算法执行时间。那还等什么，毁灭吧，赶紧的！</p>
-<p>1、单词搜素</p>
-<p>给定一个二维网格和一个单词，找出该单词是否存在于网格中。</p>
-<p>单词必须按照字母顺序，通过相邻的单元格内的字母构成，其中“相邻”单元格是那些水平相邻或垂直相邻的单元格。同一个单元格内的字母不允许被重复使用。</p>
-<span id="more"></span>
-
-<p>示例:</p>
-<p>board =</p>
-<p>[</p>
-<p>  [‘A’,’B’,’C’,’E’],</p>
-<p>  [‘S’,’F’,’C’,’S’],</p>
-<p>  [‘A’,’D’,’E’,’E’]</p>
-<p>]</p>
-<p>给定 word = “ABCCED”, 返回 true</p>
-<p>给定 word = “SEE”, 返回 true</p>
-<p>给定 word = “ABCB”, 返回 false</p>
-<p>提示：</p>
-<ul>
-<li><p>board 和 word 中只包含大写和小写英文字母。</p>
-</li>
-<li><p>1 &lt;= board.length &lt;= 200</p>
-</li>
-<li><p>1 &lt;= board[i].length &lt;= 200</p>
-</li>
-<li><p>1 &lt;= word.length &lt;= 10^3</p>
-</li>
-</ul>
-<p>代码：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">public boolean exist(char[][] board, String word) &#123;</span><br><span class="line">    <span class="keyword">for</span> (int i = 0; i &lt; board.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (int j = 0; j &lt; board[i].length; j++) &#123;</span><br><span class="line">            boolean[][] used = new boolean[board.length][board[i].length];</span><br><span class="line">            <span class="keyword">if</span> (dfs(i, j, board, word, 0, used)) &#123;</span><br><span class="line">                <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">private boolean dfs(int row, int col, char[][] board, String word, int index, boolean[][] used) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == word.length()) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (row &lt; 0 || row &gt;= board.length || col &lt; 0 || col &gt;= board[row].length || board[row][col] != word.charAt(index) || used[row][col]) &#123;</span><br><span class="line">        <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    used[row][col] = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    boolean res = dfs(row + 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col + 1, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row - 1, col, board, word, index + 1, used) ||</span><br><span class="line">            dfs(row, col - 1, board, word, index + 1, used);</span><br><span class="line">    used[row][col] = <span class="literal">false</span>;</span><br><span class="line">    <span class="built_in">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意点：</p>
-<ol>
-<li><p>可以看到连续四个dfs那里，用的是短路或，这样保证了只要存在true的结果，其他的dfs也就不用递归进去了，也就达到了剪枝的效果。</p>
-</li>
-<li><p>注意这里dfs进去前没有判断边界条件，而是放在了进去后再进行判断，有时候知道怎么做就是写不出来，这点也要注意。</p>
-</li>
-</ol>
-<br>
-2、累加数
-
-<p>累加数是一个字符串，组成它的数字可以形成累加序列。</p>
-<p>一个有效的累加序列必须至少包含 3 个数。除了最开始的两个数以外，字符串中的其他数都等于它之前两个数相加的和。</p>
-<p>给定一个只包含数字 ‘0’-‘9’ 的字符串，编写一个算法来判断给定输入是否是累加数。</p>
-<p>说明: 累加序列里的数不会以 0 开头，所以不会出现 1, 2, 03 或者 1, 02, 3 的情况。</p>
-<p>示例 1:</p>
-<p>输入: “112358”</p>
-<p>输出: true </p>
-<p>解释: 累加序列为: 1, 1, 2, 3, 5, 8 。1 + 1 = 2, 1 + 2 = 3, 2 + 3 = 5, 3 + 5 = 8</p>
-<p>示例 2:</p>
-<p>输入: “199100199”</p>
-<p>输出: true </p>
-<p>解释: 累加序列为: 1, 99, 100, 199。1 + 99 = 100, 99 + 100 = 199</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">private String s;</span><br><span class="line"></span><br><span class="line">private int n;</span><br><span class="line"></span><br><span class="line">public boolean isAdditiveNumber(String num) &#123;</span><br><span class="line">    s = num;</span><br><span class="line">    n = s.length();</span><br><span class="line">    <span class="built_in">return</span> dfs(0, 0, 0, 0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">/**</span><br><span class="line"> *</span><br><span class="line"> * @param index 下标</span><br><span class="line"> * @param sum 前两个数之和</span><br><span class="line"> * @param previous 前一个数</span><br><span class="line"> * @param count 已经添加的个数</span><br><span class="line"> * @<span class="built_in">return</span></span><br><span class="line"> */</span><br><span class="line">private boolean dfs(int index, long sum, long previous, int count) &#123;</span><br><span class="line">    <span class="keyword">if</span> (index == n) &#123;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 3) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    // value值用于累加值</span><br><span class="line">    long value = 0;</span><br><span class="line">    <span class="keyword">for</span> (int i = index; i &lt; n; i++) &#123;</span><br><span class="line">        // 第一个数是0，而且当前value大于一位，直接<span class="built_in">break</span></span><br><span class="line">        <span class="keyword">if</span> (i &gt; index &amp;&amp; s.charAt(index) == <span class="string">&#x27;0&#x27;</span>) &#123;</span><br><span class="line">            <span class="built_in">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        value = value * 10 + s.charAt(i) - <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">        <span class="keyword">if</span> (count &gt;= 2) &#123;</span><br><span class="line">            <span class="keyword">if</span> (value &lt; sum) &#123;</span><br><span class="line">                // 继续累加value</span><br><span class="line">                <span class="built_in">continue</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (value &gt; sum) &#123;</span><br><span class="line">                // 累加value无意义，直接<span class="built_in">break</span></span><br><span class="line">                <span class="built_in">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        // 忽略<span class="literal">false</span>结果，妙！</span><br><span class="line">        <span class="keyword">if</span> (dfs(i + 1, previous + value, value, count + 1)) &#123;</span><br><span class="line">            <span class="built_in">return</span> <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意点：</p>
-<ul>
-<li>这里dfs进去直接忽略了false结果，试想这里如果不忽略false，也返回一个false结果，那么只要一次尝试不成功就不会继续尝试了,这样就没有达到穷举的效果，而一点返回true，说明我们这种字符串分割方法就是我们要的结果，因此可以直接返回true，一层接着一层，最终最外层返回true，给到调用方，结束递归。</li>
-</ul>
-]]></content>
-      <categories>
-        <category>数据结构与算法</category>
-      </categories>
-      <tags>
-        <tag>回溯</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>小公司的大梦想 - 秒杀</title>
-    <url>/2021/06/17/spide/</url>
-    <content><![CDATA[<p>&ensp;&ensp;最近工作上有一个限量点餐的需求，本来公司人不多，但是谁知餐厅供应的特色腊肠牛肉饭特少，而员工对这特色饭情有独钟，导致餐厅一开始营业员工就开始疯抢，这也就形成了电商行业中著名的秒杀情景。</p>
-<p>&ensp;&ensp;而此时我以前的代码实现的下单方案是：先从数据库中查询出该时段该菜式的销售量，再与该菜式总的库存进行比较，如果大于库存，直接返回“菜式已售罄”；如果小于库存，则进行后面的下单流程。有一点经验或认知的朋友，一眼就能看出这里存在并发问题。可能是因为一直被动接受业务的原因，直到和同时聊起项目被同事怀疑代码有并发bug时，才仔细一想确实有bug。这里需要指出的是项目使用的语言是Node.js，尽管Node是单线程的，但是单线程只是针对一个请求来说，对于多个请求，还是存在并发问题的。这其中的道理可以类比Java的指令重排：对于单线程，再怎么指令重排也不会影响到线程的执行结果；但是对于别的线程看到的结果就有可能不同了。这也是Java线程安全问题的本质原因。</p>
-<span id="more"></span>
-
-<p>&ensp;&ensp;经过一番查阅资料和请教大佬，最终决定使用redis的列表来做队列，基于排队的理念来实现“秒杀”。具体的将每个菜式的库存保存在Redis中，然后对于每个时段每个菜式的请求用一个list保存（餐厅的菜式供应是分时段的，每个时段开始时菜式库存都会初始化为原来值）。当请求来了先把请求放到队列的右边，然后从左边取出前‘’库存量‘’个请求，判断当前请求是否在这前“库存量”个请求中。如果在，进行下单操作；如果不在，返回‘’库存不足‘’。对应业务具体思路如下：</p>
-<p>&ensp;&ensp;这里对于为了标识每个请求不同，将请求人的 id+uuid.v4() 作为值rpush进对应的菜式列表，如果请求n份菜式，就rpush n次值。因为业务同时需要取消订单、修改订单，取消订单时需要找到添加订单时push进去的值并删除，因此需要将添加订单时push进去的值存起来，这里使用订单orderId做key，添加订单时push进去的值做value存入Redis中；修改订单麻烦一点，因为加菜会rpush进新的请求并判断请求是不是在前“库存量”内，所以在生成订单时如果不满足库存要求，就要将该请求删除掉。另外假设下订单时选了一份菜，修改订单时如果将该菜式数量加1，如果此时生成不同的 id + uuid.v4()值存进去的话，等以后将这两份分别删除的话，就得分别拿到这两份菜式对应的id + uuid.v4()值,如果n次修改订单并添加该菜式的数量，就会生成n个id + uuid.v4()值，这样操作起来就比较麻烦了，所以修改订单时如果对同一个菜式进行修改，使用的id + uuid.v4()值就是这个订单生成时对应的id + uuid.v4() 值，这样带来的另一个问题是修改订单时判断list前‘库存量’个请求的数量要跟修改订单后的数量一致才表示能够进行修改操作，否则返回“库存不足”。</p>
-<p>&ensp;&ensp;核心代码实现如下：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/** </span><br><span class="line">  * &#123;Array&#125; dishes </span><br><span class="line">  * &#123;Number&#125; dishes[*].dishesId  - 菜式id</span><br><span class="line">  * &#123;Number&#125; dishes[*].number    - 菜式数量</span><br><span class="line">  * &#123;String&#125; keyPrefix           - 请求list的key前缀</span><br><span class="line">  * &#123;String&#125; keySuffix           - 请求list的key后缀，由餐厅id + 营业开始时间时间戳组成</span><br><span class="line">  * &#123;String&#125; userValue           - 请求list的请求值，由用户Id + uuid.v4()组成</span><br><span class="line">  * &#123;Object&#125; dishNumberMap &#123;dishId:number&#125;,number表示修改订单成功后该菜式的数量 </span><br><span class="line">  */ </span><br><span class="line"> async <span class="keyword">function</span> checkStock(dishes,keyPrefix,keySuffix,userValue,dishNumberMap)&#123; </span><br><span class="line">     <span class="built_in">let</span> stckMap = &#123;&#125;; // 保存菜式的库存</span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> stock = awaic cache.get(<span class="string">&#x27;stock:&#x27;</span> + dish.dishesId); // 获取菜式库存</span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1)&#123; // -1表示无限库存</span><br><span class="line">             stockMap[dish.dishesId] = stock; </span><br><span class="line">             <span class="keyword">for</span>(<span class="built_in">let</span> i = 0;i&lt;dish.number;i++)&#123; </span><br><span class="line">                 // rpush keyPrefix + dishesId + keySuffix : list </span><br><span class="line">                 await cache.rpush(keyPrefix + dish.dishesId + keySuffix,userValue); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line">     <span class="keyword">for</span> (<span class="built_in">let</span> dish of dishes) &#123; </span><br><span class="line">         <span class="built_in">let</span> number = (dishNumberMap &amp;&amp; dishNumberMap[dish.dishesId]) || dish.number; </span><br><span class="line">         <span class="built_in">let</span> stock = stockMap[dish.dishesId]; </span><br><span class="line">         <span class="keyword">if</span> (!stock &amp;&amp; stock != -1) &#123; // -1表示无限库存  </span><br><span class="line">             // 取前stock个请求 </span><br><span class="line">             <span class="built_in">let</span> userValueList = await cache.lrange(keyPrefix + dish.dishesId + keySuffix,0,stock -1); </span><br><span class="line">             <span class="keyword">if</span> ((_.countBy(userValueList)[userValue] || 0) &lt; number)&#123; // 判断数量是否相等 </span><br><span class="line">                 // 队列前stock个请求包含的userVaule个数小于请求的number值，则移除当前请求，为了修改订单时可以push进新的userValue </span><br><span class="line">                 <span class="keyword">for</span> (<span class="built_in">let</span> d of dishes)&#123; </span><br><span class="line">                     await cache.lrem(keyPrefix + d.dishesId + keySuffix, -d.number,userValue); </span><br><span class="line">                 &#125; </span><br><span class="line">                 <span class="built_in">return</span> Promise.reject(<span class="string">&#x27;库存不足&#x27;</span>); </span><br><span class="line">             &#125; </span><br><span class="line">         &#125; </span><br><span class="line">     &#125; </span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-<p>&ensp;&ensp;总结一下，主要利用了队列来实现对有限资源的请求与分发，以及redis 单线程的特点实现线程安全。当然还有更好的方案，这个方案很简单，但是扩展性很差，而且也不能确定就一定没有问题。如果你有更好的解决方案或者对此有什么问题和见解欢迎留言~</p>
-]]></content>
-      <categories>
-        <category>技术应用</category>
-      </categories>
-      <tags>
-        <tag>秒杀</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>算法的奥秘-栈（基础篇）</title>
-    <url>/2021/06/17/stack-1/</url>
-    <content><![CDATA[<p>&ensp;&ensp;今天分享下栈的基础算法，栈一句话描述就是一个后进先出的容器，跟栈相对立的一个结构是队列，队列的特征是元素先进先出。他们之间可以互相转换。那还等什么，毁灭吧，赶紧的！</p>
-<br>
-1、用队列实现栈
-
-<p>请你仅使用两个队列实现一个后入先出（LIFO）的栈，并支持普通队列的全部四种操作（push、top、pop 和 empty）。</p>
-<span id="more"></span>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">class MyStack &#123;</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue1 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Queue&lt;Integer&gt; queue2 = new LinkedList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public MyStack() &#123;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x onto stack. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        queue2.add(x);</span><br><span class="line">        while(!queue1.isEmpty()) &#123;</span><br><span class="line">            queue2.add(queue1.poll());</span><br><span class="line">        &#125;</span><br><span class="line">        Queue&lt;Integer&gt; temp = queue1;</span><br><span class="line">        queue1 = queue2;</span><br><span class="line">        queue2 = temp;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element on top of the stack and returns that element. */</span><br><span class="line">    public int pop() &#123;</span><br><span class="line">        return queue1.poll();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the top element. */</span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return queue1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the stack is empty. */</span><br><span class="line">    public boolean empty() &#123;</span><br><span class="line">        return queue1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>入栈操作时，首先将元素入队到queue2,然后将queue1的全部元素依次出队并入队到queue2，此时queue2的前端元素即为新入栈的元素，再将queue1与queue2互换，即queue1的元素即为栈内的元素，queue1的前端和后端分别对应栈顶和栈底。</p>
-</li>
-<li><p>由于每次入栈操作都确保queue1的前端元素为栈顶元素，因此出栈操作和获取栈顶操作都可以简单的实现。</p>
-</li>
-</ul>
-<br>
-  2、用栈实现队列
-
-<p>请你仅使用两个栈实现先入先出队列。队列应当支持一般队列支持的所有操作（push、pop、peek、empty）：</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MyQueue &#123;</span><br><span class="line">    Stack&lt;Integer&gt; stack1 = new Stack&lt;&gt;();</span><br><span class="line">    Stack&lt;Integer&gt; stack2 = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /** Initialize your data structure here. */</span><br><span class="line">    public <span class="function"><span class="title">MyQueue</span></span>() &#123;</span><br><span class="line">        </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Push element x to the back of queue. */</span><br><span class="line">    public void push(int x) &#123;</span><br><span class="line">        <span class="keyword">while</span>(!stack1.isEmpty()) &#123;</span><br><span class="line">            stack2.push(stack1.pop());</span><br><span class="line">        &#125;</span><br><span class="line">        stack1.push(x);</span><br><span class="line">        <span class="keyword">while</span>(!stack2.isEmpty()) &#123;</span><br><span class="line">            stack1.push(stack2.pop());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Removes the element from <span class="keyword">in</span> front of queue and returns that element. */</span><br><span class="line">    public int <span class="function"><span class="title">pop</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.pop();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Get the front element. */</span><br><span class="line">    public int <span class="function"><span class="title">peek</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.peek();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    /** Returns whether the queue is empty. */</span><br><span class="line">    public boolean <span class="function"><span class="title">empty</span></span>() &#123;</span><br><span class="line">        <span class="built_in">return</span> stack1.isEmpty();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li>元素x入栈时，首先将stack1中的元素依次出栈并入栈到stack2,然后将x入栈到stack1,再将stack2中的元素依次出栈并入栈到stack1,这样x就位于stack1的栈底，而原来stack1中的元素位置没有变化，即实现了队列的效果。</li>
-</ul>
-<br>
-
-<p>  3、最小栈</p>
-<p>设计一个支持 push ，pop ，top 操作，并能在常数时间内检索到最小元素的栈。</p>
-<ul>
-<li>push(x) —— 将元素 x 推入栈中。</li>
-<li>pop() —— 删除栈顶的元素。</li>
-<li>top() —— 获取栈顶元素。</li>
-<li>getMin() —— 检索栈中的最小元素。</li>
-</ul>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MinStack &#123;</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    Stack&lt;Integer&gt; minStack = new Stack&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    /**</span><br><span class="line">     * initialize your data structure here.</span><br><span class="line">     */</span><br><span class="line">    public MinStack() &#123;</span><br><span class="line">        minStack.push(Integer.MAX_VALUE);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void push(int val) &#123;</span><br><span class="line">        stack.push(val);</span><br><span class="line">        minStack.push(Math.min(minStack.peek(), val));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public void pop() &#123;</span><br><span class="line">        int pop = stack.pop();</span><br><span class="line">        minStack.pop();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int top() &#123;</span><br><span class="line">        return stack.peek();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public int getMin() &#123;</span><br><span class="line">        return minStack.peek();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<ul>
-<li><p>对于栈来说，如果一个元素 a 在入栈时，栈里有其它的元素 b, c, d，那么无论这个栈在之后经历了什么操作，只要 a 在栈中，b, c, d 就一定在栈中，因为在 a 被弹出之前，b, c, d 不会被弹出。</p>
-</li>
-<li><p>因此，在操作过程中的任意一个时刻，只要栈顶的元素是 a，那么我们就可以确定栈里面现在的元素一定是 a, b, c, d。</p>
-</li>
-<li><p>那么，我们可以在每个元素 a 入栈时把当前栈的最小值 m 存储起来。在这之后无论何时，如果栈顶元素是 a，我们就可以直接返回存储的最小值 m。</p>
-</li>
-</ul>
-<br>
-4、最大栈
-
-<p>   和最小栈同样的思路，读者可以自己尝试着写写。</p>
- <Br> 
-5、队列的最大值
-
-<p>请定义一个队列并实现函数 max_value 得到队列里的最大值，要求函数max_value、push_back 和 pop_front 的均摊时间复杂度都是O(1)。</p>
-<p>若队列为空，pop_front 和 max_value 需要返回 -1</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">class MaxQueue &#123;</span><br><span class="line">    Queue&lt;Integer&gt; q;</span><br><span class="line">    Deque&lt;Integer&gt; d;</span><br><span class="line"></span><br><span class="line">    public MaxQueue() &#123;</span><br><span class="line">        q = new LinkedList&lt;Integer&gt;();</span><br><span class="line">        d = new LinkedList&lt;Integer&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int max_value() &#123;</span><br><span class="line">        if (d.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        return d.peekFirst();</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public void push_back(int value) &#123;</span><br><span class="line">        while (!d.isEmpty() &amp;&amp; d.peekLast() &lt; value) &#123;</span><br><span class="line">            d.pollLast();</span><br><span class="line">        &#125;</span><br><span class="line">        d.offerLast(value);</span><br><span class="line">        q.offer(value);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    public int pop_front() &#123;</span><br><span class="line">        if (q.isEmpty()) &#123;</span><br><span class="line">            return -1;</span><br><span class="line">        &#125;</span><br><span class="line">        int ans = q.poll();</span><br><span class="line">        if (ans == d.peekFirst()) &#123;</span><br><span class="line">            d.pollFirst();</span><br><span class="line">        &#125;</span><br><span class="line">        return ans;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>&ensp;&ensp;这题其实是队列的特性，题目的标签是栈，但是目前没想到利用栈的解法，这里分享一种通过双端队列实现的方法。</p>
-<p>&ensp;&ensp;本算法基于问题的一个重要性质：当一个元素进入队列的时候，它前面所有比它小的元素就不会再对答案产生影响。</p>
-<p>&ensp;&ensp;举个例子，如果我们向队列中插入数字序列 1 1 1 1 2，那么在第一个数字 2 被插入后，数字 2 前面的所有数字 1 将不会对结果产生影响。因为按照队列的取出顺序，数字 2 只能在所有的数字 1 被取出之后才能被取出，因此如果数字 1 如果在队列中，那么数字 2 必然也在队列中，使得数字 1 对结果没有影响。</p>
-<p>&ensp;&ensp;按照上面的思路，我们可以设计这样的方法：从队列尾部插入元素时，我们可以提前取出队列中所有比这个元素小的元素，使得队列中只保留对结果有影响的数字。这样的方法等价于要求维持队列单调递减，即要保证每个元素的前面都没有比它小的元素。</p>
-<p>&ensp;&ensp;那么如何高效实现一个始终递减的队列呢？我们只需要在插入每一个元素 value 时，从队列尾部依次取出比当前元素 value 小的元素，直到遇到一个比当前元素大的元素 value’ 即可。</p>
-</Br>]]></content>
-      <categories>
-        <category>数据结构与算法</category>
-      </categories>
-      <tags>
-        <tag>栈</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>XXL-JOB任务一直卡在进行中状态排查</title>
     <url>/2021/06/17/xxl-job-running-check/</url>
     <content><![CDATA[<p>&ensp;&ensp;最近发现 xxl-job（xxl-job是一个轻量级分布式任务调度平台） 的任务一直卡在进行中状态，期间 dump 过执行器的进程，发现线程已经没了，而且没有任何异常日志，网上查看原因，这是作者给的答案：</p>
@@ -463,25 +463,6 @@
 ]]></content>
       <tags>
         <tag>ES</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>工作经验</title>
-    <url>/2022/05/04/work-experience/</url>
-    <content><![CDATA[<blockquote>
-<p>最近工作中遇到一些不愉快的事情，有自己的原因，也有其他的原因，为了避免后续再遇到这种情况，以及自己更好地成长，这里总结一下</p>
-</blockquote>
-<h2 id="如何更好的工作"><a href="#如何更好的工作" class="headerlink" title="如何更好的工作"></a>如何更好的工作</h2><ol>
-<li>客观对待工作中的问题，尽量不掺杂个人感情。</li>
-<li>对某件事情有疑问或者不同的看法时及时沟通，尽量与对方达成一致，如果达不成一致，可以拉会进行投票，看大家的看法，遵循更多人的意见。切忌攻击、逃跑或者忽略对待。</li>
-<li>沟通起来要有耐心。</li>
-<li>公司花钱买了我们的时间，遇到工作与学习冲突时，将工作放第一位；努力做好每份工作，追求极致，在追求极致中学习成长。</li>
-<li>除了工作中学习，自身的学习（补缺补漏）也必不可少；保持良好心态，不急躁，不浮躁，不与别人比较，只与昨天的自己比较，争取每天进步一点点。</li>
-<li>保持乐观心态，平衡好生活与工作，没有紧急事情9点下班，去健身房走走动动，增强体质，持续发展。</li>
-</ol>
-]]></content>
-      <tags>
-        <tag>工作经验</tag>
       </tags>
   </entry>
   <entry>
@@ -577,6 +558,152 @@
 ]]></content>
       <tags>
         <tag>网络</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>工作经验</title>
+    <url>/2022/05/04/work-experience/</url>
+    <content><![CDATA[<blockquote>
+<p>最近工作中遇到一些不愉快的事情，有自己的原因，也有其他的原因，为了避免后续再遇到这种情况，以及自己更好地成长，这里总结一下</p>
+</blockquote>
+<h2 id="如何更好的工作"><a href="#如何更好的工作" class="headerlink" title="如何更好的工作"></a>如何更好的工作</h2><ol>
+<li>客观对待工作中的问题，尽量不掺杂个人感情。</li>
+<li>对某件事情有疑问或者不同的看法时及时沟通，尽量与对方达成一致，如果达不成一致，可以拉会进行投票，看大家的看法，遵循更多人的意见。切忌攻击、逃跑或者忽略对待。</li>
+<li>沟通起来要有耐心。</li>
+<li>公司花钱买了我们的时间，遇到工作与学习冲突时，将工作放第一位；努力做好每份工作，追求极致，在追求极致中学习成长。</li>
+<li>除了工作中学习，自身的学习（补缺补漏）也必不可少；保持良好心态，不急躁，不浮躁，不与别人比较，只与昨天的自己比较，争取每天进步一点点。</li>
+<li>保持乐观心态，平衡好生活与工作，没有紧急事情9点下班，去健身房走走动动，增强体质，持续发展。</li>
+</ol>
+]]></content>
+      <tags>
+        <tag>工作经验</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>kafka</title>
+    <url>/2022/11/11/kafka/</url>
+    <content><![CDATA[<h3 id="kafka"><a href="#kafka" class="headerlink" title="kafka"></a>kafka</h3><ul>
+<li><p>为什么是拉模式</p>
+</li>
+<li><p>每个partition物理上对应一个文件夹，每个segment对应一个文件，删数据是直接删segment,因此删数据也很快。</p>
+</li>
+<li><p>存磁盘，append-only 顺序写(读)磁盘 对于机械磁盘，顺序写磁盘比随机写内存还要快</p>
+</li>
+<li><p>异步刷盘，broker系统crash了可能丢数据</p>
+</li>
+<li><p>默认异步发送，本地有个缓存，如果想同步发送，调用flush方法，producer宕机了可能丢缓存了的数据</p>
+<span id="more"></span></li>
+<li><p>producer如何保证消息顺序 query和retry机制</p>
+<ul>
+<li>设置max.in.flight.requests.per.connection 表示一个producer与broker之间的连接最多同时有几个请求，设置了会影响吞吐量</li>
+</ul>
+</li>
+<li><p>一个partition只能被一个consumer消费</p>
+<ul>
+<li>容易保证不重复消费数据</li>
+<li>保证顺序消费</li>
+</ul>
+</li>
+<li><p>ISR中所有副本都对某记录ack后，leader才会commit某记录，只有commit的记录消费者才能读到</p>
+</li>
+<li><p>failover后随机从ISR列表中选出一个副本为leader，因此能够保证已经commit的数据都没有丢失。</p>
+</li>
+</ul>
+<h4 id="rebalance"><a href="#rebalance" class="headerlink" title="rebalance"></a>rebalance</h4><p>新成员加入组流程<br><img src="/images/queue/rebalance.png" alt="img.png"></p>
+<blockquote>
+<p>基于zookeeper watch实现。没有主节点，看到的partition可能不一致，最终造成脑裂，重新分配后，假如其中一个consumer连不上broker<br>没有同步给其他consumer<br>基于Coordinator实现，为每个消费者组选择一个leader，leader通过syncgroup rpc将rebalance分配方案发给coordinator,其他member通过<br>syncgroup rpc向coordinator获取各自被分配的结果。</p>
+</blockquote>
+<p><strong>如何避免不必要的rebalance</strong></p>
+<ul>
+<li>第一类非必要 Rebalance 是因为未能及时发送心跳，导致 Consumer 被 “踢出”Group 而引发的。这种情况下我们可以设置 session.timeout.ms 和 heartbeat.interval.ms 的值，来尽量避免rebalance的出现<ul>
+<li>最佳实践<ul>
+<li>设置 session.timeout.ms = 6s。（超过这个时间，Coordinator 就会认为该 Consumer 已经 “死” 了，从而将其从 Group 中移除，然后开启新一轮 Rebalance）</li>
+<li>设置 heartbeat.interval.ms = 2s。</li>
+<li>要保证 Consumer 实例在被判定为 “dead” 之前，能够发送至少 3 轮的心跳请求，即 session.timeout.ms &gt;= 3 * heartbeat.interval.ms。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>第二类非必要 Rebalance 是 Consumer 消费时间过长导致的，此时，max.poll.interval.ms 参数值设置得比下游最大处理时间稍长一点，避免非预期的 Rebalance。</li>
+</ul>
+<h4 id="Kafka-如何保证消息不丢失"><a href="#Kafka-如何保证消息不丢失" class="headerlink" title="Kafka 如何保证消息不丢失"></a>Kafka 如何保证消息不丢失</h4><ol>
+<li>生产者<ul>
+<li>在回调方法中重试，间隔一定时间</li>
+</ul>
+</li>
+<li>消费者 <ul>
+<li>关闭自动提交offset，每次在真正消费完消息之后再自己手动提交 offset。</li>
+</ul>
+</li>
+<li>broker<ul>
+<li>设置ack=all,表示只有所有 ISR 列表的副本全部收到消息时，生产者才会接收到来自服务器的响应</li>
+<li>设置 replication.factor &gt;= 3,保证每个 分区(partition) 至少有 3 个副本。虽然造成了数据冗余，但是带来了数据的安全性。</li>
+<li>设置 min.insync.replicas &gt; 1,这样配置代表消息至少要被写入到 2 个副本才算是被成功发送。</li>
+<li>设置 unclean.leader.election.enable = false,当 leader 副本发生故障时就不会从 follower 副本中和 leader 同步程度达不到要求的副本中选择出 leader ，这样降低了消息丢失的可能性。</li>
+</ul>
+</li>
+</ol>
+<h3 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h3><ol>
+<li>一个 Topic 分布在多个 Broker上，一个 Broker 可以配置多个 Topic ，它们是多对多的关系.</li>
+<li>NameServer其实也是一个 注册中心 ，主要提供两个功能：Broker管理 和 路由信息管理 。集群部署，但是请注意它是 <strong>去中心化</strong> 的.</li>
+<li> <strong>单个Broker和所有NameServer保持长连接</strong> ，并且在每隔30秒 Broker 会向所有 Nameserver 发送心跳，心跳包含了自身的 Topic 配置信息</li>
+<li>RocketMQ 是不支持自动主从切换的，当主节点挂掉之后，生产者就不能再给这个主节点生产消息了。消费者可以自动切换到从节点进行消费</li>
+<li>异步刷盘只有在 Broker 意外宕机的时候会丢失部分数据，可以设置 Broker 的参数 FlushDiskType 来调整刷盘策略(ASYNC_FLUSH 或者 SYNC_FLUSH)</li>
+<li>顺序消费和重复消费原理跟kafka一样（分区有序，消费幂等处理）</li>
+<li>分布式事务，2pc,事务消息加上事务反查机制.本地事务和存储消息到消息队列才是同一个事务。这样也就产生了<strong>事务的最终一致性</strong>，因为整个过程是异步的，每个系统只要保证它自己那一部分的事务就行了。</li>
+<li>使用mmap实现零拷贝，使用数据和索引分离，当消息需要写入时，使用 commitlog <strong>文件顺序写</strong>，当需要定位某个消息时，查询index 文件来定位，从而减少文件IO随机读写的性能损耗</li>
+</ol>
+<p><img src="/images/queue/img.png" alt="img.png"></p>
+<p>在图中最左边说明了红色方块代表被写入的消息，虚线方块代表等待被写入的。左边的生产者发送消息会指定 Topic 、QueueId 和具体消息内容，而在 Broker 中管你是哪门子消息，<br>他直接 全部顺序存储到了 CommitLog。而根据生产者指定的 Topic 和 QueueId 将这条消息本身在 CommitLog 的偏移(offset)，消息本身大小，<br>和tag的hash值存入对应的 ConsumeQueue 索引文件中。而在每个队列中都保存了 ConsumeOffset 即每个消费者组的消费位置(我在架构那里提到了，忘了的同学可以回去看一下)，<br>而消费者拉取消息进行消费的时候只需要根据 ConsumeOffset 获取下一个未被消费的消息就行了。</p>
+<h4 id="RocketMQ-不使用-ZooKeeper-作为注册中心的原因，以及自制的-NameServer-优缺点？"><a href="#RocketMQ-不使用-ZooKeeper-作为注册中心的原因，以及自制的-NameServer-优缺点？" class="headerlink" title="RocketMQ 不使用 ZooKeeper 作为注册中心的原因，以及自制的 NameServer 优缺点？"></a>RocketMQ 不使用 ZooKeeper 作为注册中心的原因，以及自制的 NameServer 优缺点？</h4><p>ZooKeeper 作为支持顺序一致性的中间件，在某些情况下，它为了满足一致性，会丢失一定时间内的可用性，RocketMQ 需要注册中心只是为了发现组件地址，<br>在某些情况下，RocketMQ 的注册中心可以出现数据不一致性，这同时也是 NameServer 的缺点，因为 NameServer 集群间互不通信，它们之间的注册信息可能会不一致</p>
+<h3 id="kafka与rocketmq对比"><a href="#kafka与rocketmq对比" class="headerlink" title="kafka与rocketmq对比"></a><a href="https://blog.csdn.net/shijinghan1126/article/details/104724407#">kafka与rocketmq对比</a></h3><p>)</p>
+<ol>
+<li>数据可靠性：<ol>
+<li>RocketMQ新增了同步刷盘机制，保证了可靠性；一个RocketMQ实例只有一个partition, 在replication时性能更好。</li>
+</ol>
+</li>
+<li>写入性能：<ol>
+<li>RocketMQ写入性能上不如kafka, 主要因为kafka主要应用于日志场景，而RocketMQ应用于业务场景，为了保证消息必达牺牲了性能，且基于线上真实场景没有在RocketMQ层做消息合并，推荐在业务层自己做。</li>
+</ol>
+</li>
+<li>单机支持的队列数：<ol>
+<li>RocketMQ支持的队列数远高于kafka支持的partition数，这样RocketMQ可以支持更多的consumer集群。</li>
+</ol>
+</li>
+<li>消息投递的实时性：<ol>
+<li>kafka与RocketMQ都支持长轮询，消息投递的延迟在几毫秒内。</li>
+</ol>
+</li>
+<li>消费失败重试：<ol>
+<li>RocketMQ支持消费失败重试功能，主要用于第一次调用不成功，后面可调用成功的场景。而kafka不支持消费失败重试。</li>
+</ol>
+</li>
+<li>严格保证消息有序：<ol>
+<li>kafka不保证消息有序，RocketMQ可保证严格的消息顺序，即使单台Broker宕机，仅会造成消息发送失败，但不会消息乱序。</li>
+</ol>
+</li>
+<li>定时消息：<br>1、kafka不支持定时消息<br>2、开源版本的RocketMQ仅支持定时级别，定时级别用户可定制</li>
+<li>分布式事务消息<br>1、kafka不支持分布式事务消息<br>2、RocketMQ支持分布式事务消息。</li>
+<li>消息查询<ol>
+<li>RocketMQ支持按消息标识或消息内容查询消息，用于排查消息丢失问题；kafka不支持消息查询。</li>
+</ol>
+</li>
+<li>消息回溯<br>1、kafka可按照消息的offset来回溯消息<br>2、RocketMQ支持按照时间来回溯消息，精度到毫秒，例如从一天的几点几分几秒几毫秒来重新消费消息。</li>
+<li>消息并行度:<ol>
+<li>kafka的消费并行度等于partition数；RocketMQ的消费并行度等于消费的线程数，不受队列数限制。</li>
+</ol>
+</li>
+<li>消息堆积能力：<br>kafka比RocketMQ的消息堆积能力更强，不过RocketMQ单机也可支持亿级的消息积压能力，这个堆积能力也能够完全满足业务需求。</li>
+</ol>
+<h4 id="kafka相比RocketMQ的优势"><a href="#kafka相比RocketMQ的优势" class="headerlink" title="kafka相比RocketMQ的优势"></a>kafka相比RocketMQ的优势</h4><p>1、单机吞吐量TPS可上百万，远高于RocketMQ的TPS7万每秒，适用于日志类消息。<br>2、kafka支持多语言的客户端</p>
+<h4 id="RocketMQ相比kafka的优势"><a href="#RocketMQ相比kafka的优势" class="headerlink" title="RocketMQ相比kafka的优势"></a>RocketMQ相比kafka的优势</h4><p>1、保证消息不丢（ 数据可靠性达10个9）<br>2、可严格保证消息有序<br>3、支持分布式事务消息 todo p1<br>4、支持按时间做消息回溯（可精确到毫秒级）<br>5、支持按标识和内容查询消息，用于排查丢消息<br>6、支持消费失败重试<br>7、可支持更多的partition, 即更多的消费线程数</p>
+]]></content>
+      <categories>
+        <category>kafka</category>
+      </categories>
+      <tags>
+        <tag>kafka</tag>
+        <tag>中间件</tag>
       </tags>
   </entry>
   <entry>
@@ -727,133 +854,6 @@
       </tags>
   </entry>
   <entry>
-    <title>kafka</title>
-    <url>/2022/11/11/kafka/</url>
-    <content><![CDATA[<h3 id="kafka"><a href="#kafka" class="headerlink" title="kafka"></a>kafka</h3><ul>
-<li><p>为什么是拉模式</p>
-</li>
-<li><p>每个partition物理上对应一个文件夹，每个segment对应一个文件，删数据是直接删segment,因此删数据也很快。</p>
-</li>
-<li><p>存磁盘，append-only 顺序写(读)磁盘 对于机械磁盘，顺序写磁盘比随机写内存还要快</p>
-</li>
-<li><p>异步刷盘，broker系统crash了可能丢数据</p>
-</li>
-<li><p>默认异步发送，本地有个缓存，如果想同步发送，调用flush方法，producer宕机了可能丢缓存了的数据</p>
-<span id="more"></span></li>
-<li><p>producer如何保证消息顺序 query和retry机制</p>
-<ul>
-<li>设置max.in.flight.requests.per.connection 表示一个producer与broker之间的连接最多同时有几个请求，设置了会影响吞吐量</li>
-</ul>
-</li>
-<li><p>一个partition只能被一个consumer消费</p>
-<ul>
-<li>容易保证不重复消费数据</li>
-<li>保证顺序消费</li>
-</ul>
-</li>
-<li><p>ISR中所有副本都对某记录ack后，leader才会commit某记录，只有commit的记录消费者才能读到</p>
-</li>
-<li><p>failover后随机从ISR列表中选出一个副本为leader，因此能够保证已经commit的数据都没有丢失。</p>
-</li>
-</ul>
-<h4 id="rebalance"><a href="#rebalance" class="headerlink" title="rebalance"></a>rebalance</h4><p>新成员加入组流程<br><img src="/images/queue/rebalance.png" alt="img.png"></p>
-<blockquote>
-<p>基于zookeeper watch实现。没有主节点，看到的partition可能不一致，最终造成脑裂，重新分配后，假如其中一个consumer连不上broker<br>没有同步给其他consumer<br>基于Coordinator实现，为每个消费者组选择一个leader，leader通过syncgroup rpc将rebalance分配方案发给coordinator,其他member通过<br>syncgroup rpc向coordinator获取各自被分配的结果。</p>
-</blockquote>
-<p><strong>如何避免不必要的rebalance</strong></p>
-<ul>
-<li>第一类非必要 Rebalance 是因为未能及时发送心跳，导致 Consumer 被 “踢出”Group 而引发的。这种情况下我们可以设置 session.timeout.ms 和 heartbeat.interval.ms 的值，来尽量避免rebalance的出现<ul>
-<li>最佳实践<ul>
-<li>设置 session.timeout.ms = 6s。（超过这个时间，Coordinator 就会认为该 Consumer 已经 “死” 了，从而将其从 Group 中移除，然后开启新一轮 Rebalance）</li>
-<li>设置 heartbeat.interval.ms = 2s。</li>
-<li>要保证 Consumer 实例在被判定为 “dead” 之前，能够发送至少 3 轮的心跳请求，即 session.timeout.ms &gt;= 3 * heartbeat.interval.ms。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>第二类非必要 Rebalance 是 Consumer 消费时间过长导致的，此时，max.poll.interval.ms 参数值设置得比下游最大处理时间稍长一点，避免非预期的 Rebalance。</li>
-</ul>
-<h4 id="Kafka-如何保证消息不丢失"><a href="#Kafka-如何保证消息不丢失" class="headerlink" title="Kafka 如何保证消息不丢失"></a>Kafka 如何保证消息不丢失</h4><ol>
-<li>生产者<ul>
-<li>在回调方法中重试，间隔一定时间</li>
-</ul>
-</li>
-<li>消费者 <ul>
-<li>关闭自动提交offset，每次在真正消费完消息之后再自己手动提交 offset。</li>
-</ul>
-</li>
-<li>broker<ul>
-<li>设置ack=all,表示只有所有 ISR 列表的副本全部收到消息时，生产者才会接收到来自服务器的响应</li>
-<li>设置 replication.factor &gt;= 3,保证每个 分区(partition) 至少有 3 个副本。虽然造成了数据冗余，但是带来了数据的安全性。</li>
-<li>设置 min.insync.replicas &gt; 1,这样配置代表消息至少要被写入到 2 个副本才算是被成功发送。</li>
-<li>设置 unclean.leader.election.enable = false,当 leader 副本发生故障时就不会从 follower 副本中和 leader 同步程度达不到要求的副本中选择出 leader ，这样降低了消息丢失的可能性。</li>
-</ul>
-</li>
-</ol>
-<h3 id="RocketMQ"><a href="#RocketMQ" class="headerlink" title="RocketMQ"></a>RocketMQ</h3><ol>
-<li>一个 Topic 分布在多个 Broker上，一个 Broker 可以配置多个 Topic ，它们是多对多的关系.</li>
-<li>NameServer其实也是一个 注册中心 ，主要提供两个功能：Broker管理 和 路由信息管理 。集群部署，但是请注意它是 <strong>去中心化</strong> 的.</li>
-<li> <strong>单个Broker和所有NameServer保持长连接</strong> ，并且在每隔30秒 Broker 会向所有 Nameserver 发送心跳，心跳包含了自身的 Topic 配置信息</li>
-<li>RocketMQ 是不支持自动主从切换的，当主节点挂掉之后，生产者就不能再给这个主节点生产消息了。消费者可以自动切换到从节点进行消费</li>
-<li>异步刷盘只有在 Broker 意外宕机的时候会丢失部分数据，可以设置 Broker 的参数 FlushDiskType 来调整刷盘策略(ASYNC_FLUSH 或者 SYNC_FLUSH)</li>
-<li>顺序消费和重复消费原理跟kafka一样（分区有序，消费幂等处理）</li>
-<li>分布式事务，2pc,事务消息加上事务反查机制.本地事务和存储消息到消息队列才是同一个事务。这样也就产生了<strong>事务的最终一致性</strong>，因为整个过程是异步的，每个系统只要保证它自己那一部分的事务就行了。</li>
-<li>使用mmap实现零拷贝，使用数据和索引分离，当消息需要写入时，使用 commitlog <strong>文件顺序写</strong>，当需要定位某个消息时，查询index 文件来定位，从而减少文件IO随机读写的性能损耗</li>
-</ol>
-<p><img src="/images/queue/img.png" alt="img.png"></p>
-<p>在图中最左边说明了红色方块代表被写入的消息，虚线方块代表等待被写入的。左边的生产者发送消息会指定 Topic 、QueueId 和具体消息内容，而在 Broker 中管你是哪门子消息，<br>他直接 全部顺序存储到了 CommitLog。而根据生产者指定的 Topic 和 QueueId 将这条消息本身在 CommitLog 的偏移(offset)，消息本身大小，<br>和tag的hash值存入对应的 ConsumeQueue 索引文件中。而在每个队列中都保存了 ConsumeOffset 即每个消费者组的消费位置(我在架构那里提到了，忘了的同学可以回去看一下)，<br>而消费者拉取消息进行消费的时候只需要根据 ConsumeOffset 获取下一个未被消费的消息就行了。</p>
-<h4 id="RocketMQ-不使用-ZooKeeper-作为注册中心的原因，以及自制的-NameServer-优缺点？"><a href="#RocketMQ-不使用-ZooKeeper-作为注册中心的原因，以及自制的-NameServer-优缺点？" class="headerlink" title="RocketMQ 不使用 ZooKeeper 作为注册中心的原因，以及自制的 NameServer 优缺点？"></a>RocketMQ 不使用 ZooKeeper 作为注册中心的原因，以及自制的 NameServer 优缺点？</h4><p>ZooKeeper 作为支持顺序一致性的中间件，在某些情况下，它为了满足一致性，会丢失一定时间内的可用性，RocketMQ 需要注册中心只是为了发现组件地址，<br>在某些情况下，RocketMQ 的注册中心可以出现数据不一致性，这同时也是 NameServer 的缺点，因为 NameServer 集群间互不通信，它们之间的注册信息可能会不一致</p>
-<h3 id="kafka与rocketmq对比"><a href="#kafka与rocketmq对比" class="headerlink" title="kafka与rocketmq对比"></a><a href="https://blog.csdn.net/shijinghan1126/article/details/104724407#">kafka与rocketmq对比</a></h3><p>)</p>
-<ol>
-<li>数据可靠性：<ol>
-<li>RocketMQ新增了同步刷盘机制，保证了可靠性；一个RocketMQ实例只有一个partition, 在replication时性能更好。</li>
-</ol>
-</li>
-<li>写入性能：<ol>
-<li>RocketMQ写入性能上不如kafka, 主要因为kafka主要应用于日志场景，而RocketMQ应用于业务场景，为了保证消息必达牺牲了性能，且基于线上真实场景没有在RocketMQ层做消息合并，推荐在业务层自己做。</li>
-</ol>
-</li>
-<li>单机支持的队列数：<ol>
-<li>RocketMQ支持的队列数远高于kafka支持的partition数，这样RocketMQ可以支持更多的consumer集群。</li>
-</ol>
-</li>
-<li>消息投递的实时性：<ol>
-<li>kafka与RocketMQ都支持长轮询，消息投递的延迟在几毫秒内。</li>
-</ol>
-</li>
-<li>消费失败重试：<ol>
-<li>RocketMQ支持消费失败重试功能，主要用于第一次调用不成功，后面可调用成功的场景。而kafka不支持消费失败重试。</li>
-</ol>
-</li>
-<li>严格保证消息有序：<ol>
-<li>kafka不保证消息有序，RocketMQ可保证严格的消息顺序，即使单台Broker宕机，仅会造成消息发送失败，但不会消息乱序。</li>
-</ol>
-</li>
-<li>定时消息：<br>1、kafka不支持定时消息<br>2、开源版本的RocketMQ仅支持定时级别，定时级别用户可定制</li>
-<li>分布式事务消息<br>1、kafka不支持分布式事务消息<br>2、RocketMQ支持分布式事务消息。</li>
-<li>消息查询<ol>
-<li>RocketMQ支持按消息标识或消息内容查询消息，用于排查消息丢失问题；kafka不支持消息查询。</li>
-</ol>
-</li>
-<li>消息回溯<br>1、kafka可按照消息的offset来回溯消息<br>2、RocketMQ支持按照时间来回溯消息，精度到毫秒，例如从一天的几点几分几秒几毫秒来重新消费消息。</li>
-<li>消息并行度:<ol>
-<li>kafka的消费并行度等于partition数；RocketMQ的消费并行度等于消费的线程数，不受队列数限制。</li>
-</ol>
-</li>
-<li>消息堆积能力：<br>kafka比RocketMQ的消息堆积能力更强，不过RocketMQ单机也可支持亿级的消息积压能力，这个堆积能力也能够完全满足业务需求。</li>
-</ol>
-<h4 id="kafka相比RocketMQ的优势"><a href="#kafka相比RocketMQ的优势" class="headerlink" title="kafka相比RocketMQ的优势"></a>kafka相比RocketMQ的优势</h4><p>1、单机吞吐量TPS可上百万，远高于RocketMQ的TPS7万每秒，适用于日志类消息。<br>2、kafka支持多语言的客户端</p>
-<h4 id="RocketMQ相比kafka的优势"><a href="#RocketMQ相比kafka的优势" class="headerlink" title="RocketMQ相比kafka的优势"></a>RocketMQ相比kafka的优势</h4><p>1、保证消息不丢（ 数据可靠性达10个9）<br>2、可严格保证消息有序<br>3、支持分布式事务消息 todo p1<br>4、支持按时间做消息回溯（可精确到毫秒级）<br>5、支持按标识和内容查询消息，用于排查丢消息<br>6、支持消费失败重试<br>7、可支持更多的partition, 即更多的消费线程数</p>
-]]></content>
-      <categories>
-        <category>kafka</category>
-      </categories>
-      <tags>
-        <tag>kafka</tag>
-        <tag>中间件</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>分布式一致性</title>
     <url>/2022/11/12/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4%E6%80%A7/</url>
     <content><![CDATA[<p>一致性</p>
@@ -898,6 +898,10 @@
 <h4 id="写时复制"><a href="#写时复制" class="headerlink" title="写时复制"></a>写时复制</h4><blockquote>
 <p>写时复制（Copy-on-write，COW），有时也称为隐式共享（implicit sharing）。COW 将复制操作推迟到第一次写入时进行：在创建一个新副本时，<br>不会立即复制资源，而是共享原始副本的资源；当修改时再执行复制操作。通过这种方式共享资源，可以显著减少创建副本时的开销，以及节省资源；同时，资源修改操作会增加少量开销。</p>
 </blockquote>
+<ul>
+<li>当Readindex结束并等待本节点的状态机apply的时候，key又被最新的更新请求给更新了怎么办，这个时候读取到的value是不是又是旧值了</li>
+<li>作者回复: <strong>线性读，读出来的值实际上是你发出读请求时间点的集群最新共识数据</strong>，在你读请求发出后，若耗时一定时间还未完成，在这过程中leader又收到了写请求更新了它,   的确你原来读出来的值相比最新的集群共识就是旧的，在实际应用中，我们一般会通过增加版本号检测识别此类问题，后面事务篇会详细和你介绍</li>
+</ul>
 <h3 id="todo"><a href="#todo" class="headerlink" title="todo"></a>todo</h3><ul>
 <li>集群成员变更</li>
 </ul>
@@ -1068,6 +1072,8 @@
 <li>否则，到主库执行查询语句。</li>
 </ol>
 <h2 id="高可用"><a href="#高可用" class="headerlink" title="高可用"></a>高可用</h2><p>MHA Manager会定时探测集群中的master节点，当master出现故障时，它可以自动将最新数据的slave(取second_behind_master的最小的master)提升为新的master，<br>然后将所有其他的slave重新指向新的master，整个故障转移过程对应用程序完全透明。</p>
+<h3 id="buffer-pool"><a href="#buffer-pool" class="headerlink" title="buffer pool"></a>buffer pool</h3><p>下面几种情况会触发脏页的刷新：</p>
+<p>当 redo log 日志满了的情况下，会主动触发脏页刷新到磁盘；<br>Buffer Pool 空间不足时，需要将一部分数据页淘汰掉，如果淘汰的是脏页，需要先将脏页同步到磁盘；<br>MySQL 认为空闲时，后台线程会定期将适量的脏页刷入到磁盘；<br>MySQL 正常关闭之前，会把所有的脏页刷入到磁盘；</p>
 ]]></content>
       <categories>
         <category>MySQL</category>
@@ -1076,6 +1082,19 @@
         <tag>中间件</tag>
         <tag>MySQL</tag>
         <tag>DB</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>tcp</title>
+    <url>/2022/11/18/tcp/</url>
+    <content><![CDATA[<h3 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h3><h3 id="半连接队列-全连接队列"><a href="#半连接队列-全连接队列" class="headerlink" title="半连接队列 全连接队列"></a>半连接队列 全连接队列</h3><h3 id="SYN-Flood攻击"><a href="#SYN-Flood攻击" class="headerlink" title="SYN Flood攻击"></a>SYN Flood攻击</h3><h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><h3 id="为什么TIME-WAIT要等两个MSL才到达CLOSED关闭状态"><a href="#为什么TIME-WAIT要等两个MSL才到达CLOSED关闭状态" class="headerlink" title="为什么TIME_WAIT要等两个MSL才到达CLOSED关闭状态"></a>为什么TIME_WAIT要等两个MSL才到达CLOSED关闭状态</h3><h2 id="重传机制"><a href="#重传机制" class="headerlink" title="重传机制"></a>重传机制</h2><h3 id="快重传"><a href="#快重传" class="headerlink" title="快重传"></a>快重传</h3><h3 id="RTT、RTO的计算"><a href="#RTT、RTO的计算" class="headerlink" title="RTT、RTO的计算"></a>RTT、RTO的计算</h3><h3 id="SACK、DSACK方法"><a href="#SACK、DSACK方法" class="headerlink" title="SACK、DSACK方法"></a>SACK、DSACK方法</h3><h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><h3 id="糊涂窗口综合症"><a href="#糊涂窗口综合症" class="headerlink" title="糊涂窗口综合症"></a>糊涂窗口综合症</h3><h3 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h3><p>ACK 报文是不会重传的</p>
+<h4 id="如果已经建立了连接，但是服务端的进程崩溃会发生什么？"><a href="#如果已经建立了连接，但是服务端的进程崩溃会发生什么？" class="headerlink" title="如果已经建立了连接，但是服务端的进程崩溃会发生什么？"></a>如果已经建立了连接，但是服务端的进程崩溃会发生什么？</h4><p>TCP 的连接信息是由内核维护的，所以当服务端的进程崩溃后，内核需要回收该进程的所有 TCP 连接资源，<br>于是内核会发送第一次挥手 FIN 报文，后续的挥手过程也都是在内核完成，并不需要进程的参与，所以即使服务端的进程退出了，还是能与客户端完成 TCP 四次挥手的过程。</p>
+]]></content>
+      <categories>
+        <category>tcp</category>
+      </categories>
+      <tags>
+        <tag>tcp</tag>
       </tags>
   </entry>
   <entry>
@@ -1156,19 +1175,6 @@
         <tag>中间件</tag>
         <tag>redis</tag>
         <tag>缓存</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>tcp</title>
-    <url>/2022/11/18/tcp/</url>
-    <content><![CDATA[<h3 id="状态机"><a href="#状态机" class="headerlink" title="状态机"></a>状态机</h3><h3 id="半连接队列-全连接队列"><a href="#半连接队列-全连接队列" class="headerlink" title="半连接队列 全连接队列"></a>半连接队列 全连接队列</h3><h3 id="SYN-Flood攻击"><a href="#SYN-Flood攻击" class="headerlink" title="SYN Flood攻击"></a>SYN Flood攻击</h3><h4 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h4><h3 id="为什么TIME-WAIT要等两个MSL才到达CLOSED关闭状态"><a href="#为什么TIME-WAIT要等两个MSL才到达CLOSED关闭状态" class="headerlink" title="为什么TIME_WAIT要等两个MSL才到达CLOSED关闭状态"></a>为什么TIME_WAIT要等两个MSL才到达CLOSED关闭状态</h3><h2 id="重传机制"><a href="#重传机制" class="headerlink" title="重传机制"></a>重传机制</h2><h3 id="快重传"><a href="#快重传" class="headerlink" title="快重传"></a>快重传</h3><h3 id="RTT、RTO的计算"><a href="#RTT、RTO的计算" class="headerlink" title="RTT、RTO的计算"></a>RTT、RTO的计算</h3><h3 id="SACK、DSACK方法"><a href="#SACK、DSACK方法" class="headerlink" title="SACK、DSACK方法"></a>SACK、DSACK方法</h3><h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><h3 id="糊涂窗口综合症"><a href="#糊涂窗口综合症" class="headerlink" title="糊涂窗口综合症"></a>糊涂窗口综合症</h3><h3 id="拥塞控制"><a href="#拥塞控制" class="headerlink" title="拥塞控制"></a>拥塞控制</h3><p>ACK 报文是不会重传的</p>
-<h4 id="如果已经建立了连接，但是服务端的进程崩溃会发生什么？"><a href="#如果已经建立了连接，但是服务端的进程崩溃会发生什么？" class="headerlink" title="如果已经建立了连接，但是服务端的进程崩溃会发生什么？"></a>如果已经建立了连接，但是服务端的进程崩溃会发生什么？</h4><p>TCP 的连接信息是由内核维护的，所以当服务端的进程崩溃后，内核需要回收该进程的所有 TCP 连接资源，<br>于是内核会发送第一次挥手 FIN 报文，后续的挥手过程也都是在内核完成，并不需要进程的参与，所以即使服务端的进程退出了，还是能与客户端完成 TCP 四次挥手的过程。</p>
-]]></content>
-      <categories>
-        <category>tcp</category>
-      </categories>
-      <tags>
-        <tag>tcp</tag>
       </tags>
   </entry>
   <entry>
@@ -1432,33 +1438,6 @@
       </tags>
   </entry>
   <entry>
-    <title>git-rebase</title>
-    <url>/2022/11/28/git-rebase/</url>
-    <content><![CDATA[<h3 id="rebase"><a href="#rebase" class="headerlink" title="rebase"></a>rebase</h3><blockquote>
-<p>git rebase master 表示将当前分支rebase到master，即以master为基地</p>
-</blockquote>
-<ol>
-<li>例如 伙伴x 的a分支提交记录： 1 –&gt; 2 –&gt; 3, master分支提交记录：1 –&gt; 2 –&gt; 4 ,在a分支执行git rebase master后<br>a分支的提交记录将变成 1 –&gt; 2 –&gt; 4 –&gt;3’(3’与3不是同一个提交，但是提交的内容相同，提交id不同)</li>
-<li>这时如果另一个伙伴 y 也在a分支上开发，并且本地提交记录为 1 –&gt; 2 –&gt; 5,而且将本地提交记录push到了远程的a分支。</li>
-<li>如果x 将rebase后的a分支push到远程a,因为远程a有x本地a没有的提交记录5，系统此时会提示x需要git pull –rebase(变基) 或者 –no-rebase（合并),<br>如果此时x直接git push –force 强推上去，远程a就会变成 1 –&gt; 2 –&gt; 4 –&gt; 3’(5没有了)。</li>
-<li>伙伴y 接着git pull远程 a,因为远程a有y本地a分支没有的提交记录4、3’，系统此时也会提醒选择 –rebase 还是 –no-base<ul>
-<li>假如选择git pull –rebase 本地分支提交记录将会变成 1 – &gt; 2 –&gt; 4 –&gt; 3’ （<strong>本地5提交记录也没了</strong>），<strong>因此会丢代码</strong></li>
-<li>假如选择git pull –no-rebase 本机分支提价记录将会变成 1 –&gt; 2 –&gt; 3’–&gt; 4’–&gt;5 –&gt;merge commit( 3’–&gt; 4’–&gt;5 按照提交时间排序)，<strong>不会丢代码</strong></li>
-</ul>
-</li>
-</ol>
-<p>因此实际开发中，如果有两个同事在同一个分支开发，<strong>一定不能进行git push –force强推</strong><br>另外，为了避免别人强推导致可能丢失代码，建议拉代码时选择<strong>git pull –no-rebase</strong>(合并)</p>
-<p>–force-with-lease 将解决这种安全问题<br>使用了 –force-with-lease 参数之后，上面那种安全问题就没有那么危险了。</p>
-<p>使用此参数推送，如果远端有其他人推送了新的提交，那么推送将被拒绝</p>
-]]></content>
-      <categories>
-        <category>git</category>
-      </categories>
-      <tags>
-        <tag>git</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>主流应用io编程模型</title>
     <url>/2022/11/27/io%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B/</url>
     <content><![CDATA[<h2 id="基础知识"><a href="#基础知识" class="headerlink" title="基础知识"></a>基础知识</h2><h3 id="五中IO模型"><a href="#五中IO模型" class="headerlink" title="五中IO模型"></a>五中IO模型</h3><ul>
@@ -1547,6 +1526,33 @@
       <tags>
         <tag>IO</tag>
         <tag>编程</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>git-rebase</title>
+    <url>/2022/11/28/git-rebase/</url>
+    <content><![CDATA[<h3 id="rebase"><a href="#rebase" class="headerlink" title="rebase"></a>rebase</h3><blockquote>
+<p>git rebase master 表示将当前分支rebase到master，即以master为基地</p>
+</blockquote>
+<ol>
+<li>例如 伙伴x 的a分支提交记录： 1 –&gt; 2 –&gt; 3, master分支提交记录：1 –&gt; 2 –&gt; 4 ,在a分支执行git rebase master后<br>a分支的提交记录将变成 1 –&gt; 2 –&gt; 4 –&gt;3’(3’与3不是同一个提交，但是提交的内容相同，提交id不同)</li>
+<li>这时如果另一个伙伴 y 也在a分支上开发，并且本地提交记录为 1 –&gt; 2 –&gt; 5,而且将本地提交记录push到了远程的a分支。</li>
+<li>如果x 将rebase后的a分支push到远程a,因为远程a有x本地a没有的提交记录5，系统此时会提示x需要git pull –rebase(变基) 或者 –no-rebase（合并),<br>如果此时x直接git push –force 强推上去，远程a就会变成 1 –&gt; 2 –&gt; 4 –&gt; 3’(5没有了)。</li>
+<li>伙伴y 接着git pull远程 a,因为远程a有y本地a分支没有的提交记录4、3’，系统此时也会提醒选择 –rebase 还是 –no-base<ul>
+<li>假如选择git pull –rebase 本地分支提交记录将会变成 1 – &gt; 2 –&gt; 4 –&gt; 3’ （<strong>本地5提交记录也没了</strong>），<strong>因此会丢代码</strong></li>
+<li>假如选择git pull –no-rebase 本机分支提价记录将会变成 1 –&gt; 2 –&gt; 3’–&gt; 4’–&gt;5 –&gt;merge commit( 3’–&gt; 4’–&gt;5 按照提交时间排序)，<strong>不会丢代码</strong></li>
+</ul>
+</li>
+</ol>
+<p>因此实际开发中，如果有两个同事在同一个分支开发，<strong>一定不能进行git push –force强推</strong><br>另外，为了避免别人强推导致可能丢失代码，建议拉代码时选择<strong>git pull –no-rebase</strong>(合并)</p>
+<p>–force-with-lease 将解决这种安全问题<br>使用了 –force-with-lease 参数之后，上面那种安全问题就没有那么危险了。</p>
+<p>使用此参数推送，如果远端有其他人推送了新的提交，那么推送将被拒绝</p>
+]]></content>
+      <categories>
+        <category>git</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
       </tags>
   </entry>
   <entry>
@@ -1662,6 +1668,27 @@
       </tags>
   </entry>
   <entry>
+    <title>思考</title>
+    <url>/2022/12/03/%E6%80%9D%E8%80%83/</url>
+    <content><![CDATA[<ul>
+<li>延迟满足感</li>
+<li>懒惰（体力的、思考的、情绪的）是万恶之源，所以修炼很多时候就是在克服惰性。</li>
+<li>年轻人不要试图追求安全感，特别是年轻的时候，周遭环境从来都不会有绝对的安全感，如果你觉得安全了，很有可能开始暗藏危机。真正的安全感，<br>来自你对自己的信心，是你每个阶段性目标的实现，而真正的归属感，在于你的内心深处，对自己命运的把控，因为你最大的对手永远是自己。</li>
+<li>其实，德州扑克和人生一样：应该：理解不确定性、专注有可能的事情、理智评估概率、能舍才能得、避免意气用事。</li>
+<li>凡事就怕不认真，不思考。好多问题我应该能知道的，只是之前没有认真看，认真想，想当然（不是没时间）。延迟满足感是一项长期修炼。</li>
+<li>加强专注力训练</li>
+<li>保证足够睡眠是积极高效的第一步。</li>
+<li>我今天的处境都是因为我有些应该做的事情我没有做，不应该做的事情我就全做，所以要改变现状，就要从自己开始。’</li>
+<li>一点不要含糊，含糊代表着侥幸、代表着自我欺骗、代表着自我感觉飘然。</li>
+<li>乔布斯说stay hungry，我以为饥渴有三个层次：贪婪、成就动机、好奇心 。三者分别关注：瞬间的结果，持续的过程，和远大的未知。<br>三者也恰好对应了三种人：卑劣的投机者，艰辛的攀登者，与幸福的探索者。保持好奇心</li>
+<li>人生的本质是追寻自我的提升。包括思想、能力、意志等等。这些发展好了，一切随之而来。偏偏大多数人追求的是短期的公司、职位、薪水，运气好的能有所发展，<br>运气差的会迷失方向流于平庸。</li>
+</ul>
+]]></content>
+      <tags>
+        <tag>杂谈</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>锁分析</title>
     <url>/2022/12/01/java%E9%94%81/</url>
     <content><![CDATA[<h2 id="线程状态"><a href="#线程状态" class="headerlink" title="线程状态"></a>线程状态</h2><ul>
@@ -1771,27 +1798,6 @@
       </tags>
   </entry>
   <entry>
-    <title>思考</title>
-    <url>/2022/12/03/%E6%80%9D%E8%80%83/</url>
-    <content><![CDATA[<ul>
-<li>延迟满足感</li>
-<li>懒惰（体力的、思考的、情绪的）是万恶之源，所以修炼很多时候就是在克服惰性。</li>
-<li>年轻人不要试图追求安全感，特别是年轻的时候，周遭环境从来都不会有绝对的安全感，如果你觉得安全了，很有可能开始暗藏危机。真正的安全感，<br>来自你对自己的信心，是你每个阶段性目标的实现，而真正的归属感，在于你的内心深处，对自己命运的把控，因为你最大的对手永远是自己。</li>
-<li>其实，德州扑克和人生一样：应该：理解不确定性、专注有可能的事情、理智评估概率、能舍才能得、避免意气用事。</li>
-<li>凡事就怕不认真，不思考。好多问题我应该能知道的，只是之前没有认真看，认真想，想当然（不是没时间）。延迟满足感是一项长期修炼。</li>
-<li>加强专注力训练</li>
-<li>保证足够睡眠是积极高效的第一步。</li>
-<li>我今天的处境都是因为我有些应该做的事情我没有做，不应该做的事情我就全做，所以要改变现状，就要从自己开始。’</li>
-<li>一点不要含糊，含糊代表着侥幸、代表着自我欺骗、代表着自我感觉飘然。</li>
-<li>乔布斯说stay hungry，我以为饥渴有三个层次：贪婪、成就动机、好奇心 。三者分别关注：瞬间的结果，持续的过程，和远大的未知。<br>三者也恰好对应了三种人：卑劣的投机者，艰辛的攀登者，与幸福的探索者。保持好奇心</li>
-<li>人生的本质是追寻自我的提升。包括思想、能力、意志等等。这些发展好了，一切随之而来。偏偏大多数人追求的是短期的公司、职位、薪水，运气好的能有所发展，<br>运气差的会迷失方向流于平庸。</li>
-</ul>
-]]></content>
-      <tags>
-        <tag>杂谈</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>map</title>
     <url>/2022/12/05/map/</url>
     <content><![CDATA[<h3 id="go-map"><a href="#go-map" class="headerlink" title="go map"></a>go map</h3><ol>
@@ -1857,7 +1863,7 @@
 <h3 id="领域服务"><a href="#领域服务" class="headerlink" title="领域服务"></a>领域服务</h3><blockquote>
 <ol>
 <li>领域中的一些概念不太适合建模为对象，即归类到实体对象或值对象，因为它们本质上就是一些操作，一些动作，而不是事物。<br>这些操作或动作往往会涉及到多个领域对象，并且需要协调这些领域对象共同完成这个操作或动作。</li>
-<li>一般的领域对象都是有状态和行为的，而领域服务没有状态只有行为;需要强调的是领域服务是无状态的，它存在的意义就是协调领域对象共完成某个操作，所有的状态还是都保存在相应的领域对象中。</li>
+<li>一般的<strong>领域对象都是有状态和行为的，而领域服务没有状态只有行为</strong>;需要强调的是领域服务是无状态的，它存在的意义就是协调领域对象共完成某个操作，所有的状态还是都保存在相应的领域对象中。</li>
 </ol>
 </blockquote>
 <h3 id="聚合及聚合根（Aggregate，Aggregate-Root）"><a href="#聚合及聚合根（Aggregate，Aggregate-Root）" class="headerlink" title="聚合及聚合根（Aggregate，Aggregate Root）"></a>聚合及聚合根（Aggregate，Aggregate Root）</h3><blockquote>
@@ -2390,6 +2396,32 @@
 </ul>
 </li>
 </ul>
+]]></content>
+  </entry>
+  <entry>
+    <title>gfs</title>
+    <url>/2023/06/17/gfs/</url>
+    <content><![CDATA[<h2 id="系统概述"><a href="#系统概述" class="headerlink" title="系统概述"></a>系统概述</h2><h3 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h3><blockquote>
+<p>master主要存储三种元数据：文件和chunk的命名空间（namespace）、文件到chunk的映射和chunk的每个副本的位置。<br>所有元数据被存储在master的内存中。前两种类型（文件和快的命名空间、文件到chunk的映射）还通过将变更（mutation）<br>记录到一个操作日志（operation log）的方式持久化存储在master的磁盘上，并在远程机器上备份。通过日志，我们可以简单、<br>可靠地更新master的状态，即使master故障也没有数据不一致的风险。master不会持久化存储chunk的位置信息，<br>而是在启动时和当chunkserver加入集群时向chunkserver询问其存储的chunk信息。</p>
+</blockquote>
+<h4 id="内存数据结构"><a href="#内存数据结构" class="headerlink" title="内存数据结构"></a>内存数据结构</h4><p>大多数文件包含多个chunk，所以大部分chunk是满的，仅最后一个chunk被部分填充。并且因为采用了<strong>前缀压缩</strong>的方式紧凑地存储文件名，每个文件的命名空间数据通常需要少于64字节。</p>
+<h4 id="chunk位置"><a href="#chunk位置" class="headerlink" title="chunk位置"></a>chunk位置</h4><p>master不会持久化保存哪台chunkserver含有给定的chunk的副本的记录，而是简单地在启动时从chunkserver获取信息<br>优点：实现简单</p>
+<h3 id="操作日志"><a href="#操作日志" class="headerlink" title="操作日志"></a>操作日志</h3><p>操作日志包含重要的元数据变更的历史记录。这是GFS的核心。它不仅是元数据中唯一被持久化的记录，还充当了定义并发操作顺序的逻辑时间线。带有版本号的文件和chunk都在他们被创建时由<strong>逻辑时间唯一、永久地确定</strong><br>我们将操作日志<strong>备份到多台远程主机</strong>上，且只有当当前操作记录条目被本地和远程主机均写入到了磁盘后才能向客户端发出响应。<br>todo 跟raft log有啥区别？<br>checkpoint: btree, async exec</p>
+<h2 id="一致性模型"><a href="#一致性模型" class="headerlink" title="一致性模型"></a>一致性模型</h2><p>在一系列变更执行成功后，被变更的文件区域状态为defined的，且该区域中包含最后一次变更写入的数据。这一点是GFS通过以下方式实现的：<br>（a）对chunk执行变更时，其所有副本按照相同的顺序应用变更（章节3.1）<br>（b）使用chunk版本号（chunk version）来检测因chunkserver宕机而错过了变更的陈旧的chunk副本（章节4.5）。陈旧的chunk副本永远不会在执行变更时被使用，也不会在master返回client请求的chunk的位置时被使用。它们会尽早地被作为垃圾回收。</p>
+<p>由于client会缓存chunk的位置，<strong>在缓存信息刷新前，client可能会访问陈旧的副本。</strong>这个时间窗口会受缓存过期时间和下一次打开文件限制（下一次打开文件会清除文件的所有chunk位置信息）。<br>GFS通过master和所有chunkserver周期性握手的方式来确定故障的chunkserver，并通过校验和（<strong>checksunmming</strong>）的方式检测数据损坏</p>
+<p>GFS应用程序可以通过一些简单的技术来使用其宽松的一致性模型，且这些技术已经因其他目标而被使用，如：依赖append而不是overwrite、检查点、自验证写入（writing self-validating）、自标识记录（self-identifying records）。</p>
+<h2 id="系统交互"><a href="#系统交互" class="headerlink" title="系统交互"></a>系统交互</h2><h3 id="租约与变更顺序"><a href="#租约与变更顺序" class="headerlink" title="租约与变更顺序"></a>租约与变更顺序</h3><p>租约本质是授予某chunk变更数据的权限（选主），避免网络分区造成的脑裂<br>改变chunk或元数据的操作被称为“变更”，如write或append。chunk变更时，其每个副本都会应用变更。我们使用租约（lease）来维护副本间变更顺序的一致性。master向其中一份副本授权一个变更的租约，我们称这个副本为primary（译注：有时也可代指primary副本所在的chunkserver）。primary为应用于该chunk的所有变更选取顺序。所有副本都会按照这个顺序来应用变更。因此，全局的变更顺序首先由master选取的租约授权顺序定义，接着在租约内由primary选取的顺序编号定义。</p>
+<p>这种租约机制是为了<strong>最小化master管理负载</strong>而设计的。租约的初始超时时间为60秒。然而，一旦chunk被变更，primary就可以向master请求延长租约时间，或者（通常为）接受来自master的租约时间延长操作。这些租约延长请求和租约授权请求依赖master与chunkserver间周期性地心跳消息来实现。有时master可能会在租约过期前视图撤销租约（例如，当master想禁止对正在被重命名的文件进行变更时）。即使master与一个primary的通信丢失，master仍可以在旧租约过期后安全地向另一个副本授权新的租约。</p>
+<p>假如 master与primary 的网络断开了，但client与primary网络正常，在该租约内也无法写入数据，因为写入时primary需要与其他secondary通信，其他secondary可能已经被master选取为新的primary，此时secondary拒绝写入。<br>假如master和primary,secondary的网络全断开了，系统在当前租约内可用，数据保持一致，租约过期后系统不可用。</p>
+<h3 id="数据流"><a href="#数据流" class="headerlink" title="数据流"></a>数据流</h3><p>数据流沿着一条精心挑选的chunkserver链以<strong>流水线的方式线性推送</strong>。我们的目标是充分利用每台机器的网络带宽，避免网络瓶颈和高延迟的链路，并最小化推送完所有数据的时延。</p>
+<p>为了尽可能地避免网络瓶颈和高延迟的数据链路（例如，交换机间链路（inter-switch）经常同时成为网络瓶颈和高延迟链路），每台机器会将数据传递给在网络拓扑中最近的的且还没有收到数据的机器。</p>
+<p>最后，我们通过流水线的方式通过TCP连接传输数据，以最小化时延。当chunkserver收到一部分数据时，它会立刻开始将数据传递给其他chunkserver。</p>
+<h3 id="原子性record-append"><a href="#原子性record-append" class="headerlink" title="原子性record append"></a>原子性record append</h3><p>多生产者单消费者 模型中使用，想到了kafka的单个分区<br>然而在record append中，client仅需指定待追加的数据。GFS会为其选择一个偏移量，在该偏移量处至少一次地原子性地将数据作为一个连续的字节序列追加到文件，并将该偏移量返回给client。</p>
+<h3 id="快照"><a href="#快照" class="headerlink" title="快照"></a>快照</h3><p>使用类似AFS[5]的标准的<strong>写入时复制</strong>技术来实现快照</p>
+<p>小于64M的文件也占用一个</p>
+<p>GFS在逻辑上用一个完整路径名到元数据的查找表来表示命名空间。通过前缀压缩技术，这个查找表可在内存中高效地表示。</p>
+<p>fileName -&gt; {chunk_list}<br>chunk {<br>    handler_id<br>    location<br>}</p>
+<p>todo   前缀压缩<br>todo 校验和计算方式</p>
 ]]></content>
   </entry>
 </search>

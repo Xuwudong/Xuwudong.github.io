@@ -24,28 +24,28 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/themes/green/pace-theme-minimal.css">
   <script src="https://cdn.jsdelivr.net/npm/pace-js@1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.cn","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.9932xt.pro","root":"/","images":"/images","scheme":"Pisces","darkmode":false,"version":"8.7.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
 <meta name="description" content="实现基于此pinyin分词器 实现搜索,自定义analyzer,使用type ngarm当做tokenizer,使用type pinyin当做filter,并且设置&quot;term_vector&quot;: &quot;with_positions_offsets&quot;">
 <meta property="og:type" content="article">
 <meta property="og:title" content="ES使用拼音搜索并且highlight搜索结果">
-<meta property="og:url" content="https://www.9932xt.cn/2022/01/01/es-pinyin-highlight/index.html">
+<meta property="og:url" content="https://www.9932xt.pro/2022/01/01/es-pinyin-highlight/index.html">
 <meta property="og:site_name" content="TecHub">
 <meta property="og:description" content="实现基于此pinyin分词器 实现搜索,自定义analyzer,使用type ngarm当做tokenizer,使用type pinyin当做filter,并且设置&quot;term_vector&quot;: &quot;with_positions_offsets&quot;">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://www.9932xt.cn/images/es/es_pinyin_highlight_res.png">
+<meta property="og:image" content="https://www.9932xt.pro/images/es/es_pinyin_highlight_res.png">
 <meta property="article:published_time" content="2022-01-01T15:08:57.000Z">
 <meta property="article:modified_time" content="2023-01-11T14:34:54.535Z">
 <meta property="article:author" content="Xuwudong">
 <meta property="article:tag" content="ES">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://www.9932xt.cn/images/es/es_pinyin_highlight_res.png">
+<meta name="twitter:image" content="https://www.9932xt.pro/images/es/es_pinyin_highlight_res.png">
 
 
-<link rel="canonical" href="https://www.9932xt.cn/2022/01/01/es-pinyin-highlight/">
+<link rel="canonical" href="https://www.9932xt.pro/2022/01/01/es-pinyin-highlight/">
 
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.cn/2022/01/01/es-pinyin-highlight/","path":"2022/01/01/es-pinyin-highlight/","title":"ES使用拼音搜索并且highlight搜索结果"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.9932xt.pro/2022/01/01/es-pinyin-highlight/","path":"2022/01/01/es-pinyin-highlight/","title":"ES使用拼音搜索并且highlight搜索结果"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
 <title>ES使用拼音搜索并且highlight搜索结果 | TecHub</title>
@@ -183,7 +183,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">34</span>
+          <span class="site-state-item-count">35</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -246,7 +246,7 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://www.9932xt.cn/2022/01/01/es-pinyin-highlight/">
+    <link itemprop="mainEntityOfPage" href="https://www.9932xt.pro/2022/01/01/es-pinyin-highlight/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/techub.jpg">
@@ -385,13 +385,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">97k</span>
+    <span title="站点总字数">100k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">1:28</span>
+    <span title="站点阅读时长">1:31</span>
   </span>
 </div>
 <div class="busuanzi-count">
